@@ -46,7 +46,7 @@ class AgentBuilder:
             try:
                 param_value = str(getattr(config, param_value[1:]))
             except:
-                raise Exception(f"Env variable {param_value} not set.")
+                raise Exception(f"Env variable {param_value[1:]} not set.")
             return param_value
         else:
             return param_value

@@ -1,7 +1,7 @@
 inference_engine:
   ollama_llama: &ollama_llama
     class: OllamaInferenceEngine
-    model_name_or_path: llama3.2
+    model_name_or_path: llama3.2:latest
     credentials:
       api_url: $OLLAMA_API_URL
     parameters:
@@ -10,36 +10,46 @@ inference_engine:
       temperature: 0.0
       repeat_penalty: 1
 
-  ollama_guardian: &ollama_guardian
-    class: OllamaInferenceEngine
-    model_name_or_path: granite3-guardian:2b
-    credentials:
-      api_url: $OLLAMA_API_URL
-    parameters:
-      num_predict: 1000
-      num_ctx: 8192
-      temperature: 0.0
-      repeat_penalty: 1
+  # ollama_granite_guardian: &ollama_granite_guardian
+  #   class: OllamaInferenceEngine
+  #   model_name_or_path: ibm/granite3.3-guardian:8b
+  #   credentials:
+  #     api_url: $OLLAMA_API_URL
+  #   parameters:
+  #     num_predict: 1000
+  #     num_ctx: 8192
+  #     temperature: 0.0
+  #     repeat_penalty: 1
 
-  ollama_granite: &ollama_granite
-    class: OllamaInferenceEngine
-    model_name_or_path: granite3.2:8b
-    credentials:
-      api_url: $OLLAMA_API_URL
-    parameters:
-      num_predict: 1000
-      num_ctx: 8192
-      temperature: 0.0
-      repeat_penalty: 1
+  # ollama_granite: &ollama_granite
+  #   class: OllamaInferenceEngine
+  #   model_name_or_path: granite3.2:8b
+  #   credentials:
+  #     api_url: $OLLAMA_API_URL
+  #   parameters:
+  #     num_predict: 1000
+  #     num_ctx: 8192
+  #     temperature: 0.0
+  #     repeat_penalty: 1
 
-  rits: &rits
+  rits_granite: &rits_granite
     class: RITSInferenceEngine
     model_name_or_path: ibm-granite/granite-3.3-8b-instruct
     credentials:
       api_key: $RITS_API_KEY
       api_url: $RITS_API_URL
     parameters:
-      max_tokens: 1000
+      max_completion_tokens: 1000
+      temperature: 0.0
+
+  rits_granite_guardian: &rits_granite_guardian
+    class: RITSInferenceEngine
+    model_name_or_path: ibm-granite/granite-guardian-3.3-8b
+    credentials:
+      api_key: $RITS_API_KEY
+      api_url: $RITS_API_URL
+    parameters:
+      max_completion_tokens: 100
       temperature: 0.0
 
 agents:
@@ -50,11 +60,13 @@ agents:
       serializer: JSON # YAML, JSON
   OrchestratorAgent:
     RiskGeneratorAgent:
-      inference_engine: *rits
+      inference_engine: *rits_granite
+      taxonomy: &taxonomy ibm-risk-atlas
     HumanInTheLoopAgent: {}
     StreamAgent: {}
     RisksAssessmentAgent:
-      inference_engine: *ollama_guardian
+      inference_engine: *rits_granite_guardian # currently only granite guardian >=3.0 models are supported.
+      taxonomy: *taxonomy
     DriftMonitoringAgent:
       inference_engine: *ollama_llama
 
