@@ -6,13 +6,14 @@
 @use '@carbon/react/scss/themes';
 @use '@carbon/react/scss/colors' as *;
 @use '@carbon/react/scss/type' as *;
+@import url("https://fonts.googleapis.com/css2?family=Lora&family=Public+Sans:ital@0;1&display=swap");
 
 /**
  * VARIABLES:
  * **********
  */
 :root {
-    @include theme(themes.$g10);
+   @include theme(themes.$g10);
   --ruby: #e22653;
   --grey: #999;
   --dark-grey: #666;
@@ -27,43 +28,17 @@
   --border-radius: 3px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    @include theme(themes.$g100);
-    --ruby: #e22653;
-    --grey: #999;
-    --dark-grey: #666;
-    --light-grey: #ccc;
-    --cream: #f9f7ed;
-    --transparent-white: #ffffffcc;
-    --transition: all ease-out 300ms;
-    --shadow: 0 1px 5px var(--dark-grey);
-    --hover-opacity: 0.7;
-    --stage-padding: 8px;
-    --panels-width: 350px;
-    --border-radius: 3px;
-  }
-}
-
 /**
  * BASE STYLES:
  * ************
  */
-
-
-.app {
-  display: grid;
-  grid-template-rows: $spacing-09 1fr;
-  height: 100vh;
-  overflow: hidden;
-}
 body {
+  @include theme(themes.$g10);
   font-size: 0.9em;
   overflow: hidden;
 }
 h1,
 h2 {
-  @include type-style('heading-07');
 }
 h2 {
   font-size: 1.3em;
@@ -94,7 +69,7 @@ body {
 }
 #app-root,
 .sigma-container {
-  //background: white;
+  background: white;
   position: absolute;
   inset: 0;
 }
@@ -177,7 +152,7 @@ div.ico > button > * {
 }
 
 button.btn {
-  //background: white;
+  background: white;
   color: black;
   border: 1px solid black;
   outline: none;
@@ -231,7 +206,7 @@ ul > li {
 }
 .panel h2 button {
   float: right;
-  //background: white;
+  background: white;
   border: 1px solid black;
   border-radius: var(--border-radius);
   font-size: 1.2em;
@@ -353,7 +328,7 @@ ul > li {
     width: auto;
   }
   #app-root.show-contents .graph-title {
-    //background: white;
+    background: white;
     padding-right: calc(3em + 2 * var(--stage-padding));
     min-height: 3em;
   }

@@ -1,4 +1,4 @@
-import { useRegisterEvents, useSigma } from "@react-sigma/core";
+import { useRegisterEvents, /*useSigma*/ } from "@react-sigma/core";
 import { FC, PropsWithChildren, useEffect } from "react";
 
 function getMouseLayer() {
@@ -9,8 +9,8 @@ const GraphEventsController: FC<PropsWithChildren<{ setHoveredNode: (node: strin
   setHoveredNode,
   children,
 }) => {
-  const sigma = useSigma();
-  const graph = sigma.getGraph();
+  //const sigma = useSigma();
+  //const graph = sigma.getGraph();
   const registerEvents = useRegisterEvents();
 
   /**
@@ -19,11 +19,12 @@ const GraphEventsController: FC<PropsWithChildren<{ setHoveredNode: (node: strin
    */
   useEffect(() => {
     registerEvents({
-      clickNode({ node }) {
-        if (!graph.getNodeAttribute(node, "hidden")) {
-          window.open(graph.getNodeAttribute(node, "URL"), "_blank");
-        }
-      },
+      //clickNode({ node }) {
+      //  if (!graph.getNodeAttribute(node, "hidden")) {
+         //window.open(graph.getNodeAttribute(node, "URL"), "_blank");
+      //   console.log('click');
+      // }
+      //},
       enterNode({ node }) {
         setHoveredNode(node);
         // TODO: Find a better way to get the DOM mouse layer:

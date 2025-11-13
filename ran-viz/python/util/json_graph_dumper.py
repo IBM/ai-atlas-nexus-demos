@@ -2,7 +2,7 @@ from datetime import date, datetime
 import json
 from typing import Any, Dict, Union
 import uuid
-
+import random
 from linkml_runtime import SchemaView
 from linkml_runtime.dumpers.dumper_root import Dumper
 from linkml_runtime.utils.context_utils import CONTEXTS_PARAM_TYPE
@@ -27,6 +27,7 @@ class JSONGraphDumper(Dumper):
         self.processed_ids = set()
         self.processed_tags = set()
         self.processed_clusters = set()
+        
 
     def _export_schema_structure(self):
         """Export schema classes and slots as nodes, with relationships as edges."""
@@ -390,18 +391,62 @@ class JSONGraphDumper(Dumper):
         def _tag_output_format(tag):
             if tag == None or tag == "unknown":
                 return {"key": "unknown", "image": "unknown.svg"}
+            if tag == "Stakeholder":
+                return {"key": "Stakeholder", "image": "person.svg"}
+            if tag == "StakeholderGroup":
+                return {"key": "StakeholderGroup", "image": "StakeholderGroup.svg"}
+            if tag == "Action":
+                return {"key": "Action", "image": "Action.svg"}
+            if tag == "Organization":
+                return {"key": "Organization", "image": "Organization.svg"}
+            if tag == "Documentation":
+                return {"key": "Documentation", "image": "Documentation.svg"}
+            if tag == "Risk":
+                return {"key": "Risk", "image": "Risk.svg"}
+            if tag == "RiskIncident":
+                return {"key": "RiskIncident", "image": "RiskIncident.svg"}
+            if tag == "RiskGroup":
+                return {"key": "RiskGroup", "image": "RiskGroup.svg"}
+            if tag == "RiskTaxonomy":
+                return {"key": "RiskTaxonomy", "image": "RiskTaxonomy.svg"}
+            if tag == "Dataset":
+                return {"key": "Dataset", "image": "Dataset.svg"}
+            if tag == "License":
+                return {"key": "License", "image": "License.svg"}
+            if tag == "Principle":
+                return {"key": "Principle", "image": "Principle.svg"}
+            if tag == "Adapter":
+                return {"key": "Adapter", "image": "Adapter.svg"}
+            if tag == "LargeLanguageModel":
+                return {"key": "LargeLanguageModel", "image": "LargeLanguageModel.svg"}
             else:
                 return {"key": tag, "image": "unknown.svg"}
 
         self.edges = [
             i for n, i in enumerate(self.edges) if i not in self.edges[:n]
         ]
+
+        def get_color_array(length):
+            colors = []
+            i = 0
+            while True:
+                r = random.randint(0, 255)
+                g = random.randint(0, 255)
+                b = random.randint(0, 255)
+                colors.append(f"#{r:02x}{g:02x}{b:02x}")
+                i += 1
+                if i > length: 
+                    break
+            return colors
+
+        color_arr = get_color_array(len(self.processed_clusters))
+
         output = {
             "nodes": self.nodes,
             "edges": self.edges,
             "clusters": [
-                {"key": cluster, "color": "#6c3e81", "clusterLabel": cluster}
-                for cluster in self.processed_clusters
+                {"key": cluster, "color": color_arr[index], "clusterLabel": cluster}
+                for index, cluster in enumerate(self.processed_clusters)
             ],
             "tags": [_tag_output_format(tag) for tag in self.processed_tags],
             "metadata": {

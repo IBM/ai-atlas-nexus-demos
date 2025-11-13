@@ -1,1 +1,1 @@
-risk-atlas-nexus [wml]
+risk-atlas-nexus [wml] @ git+https://github.com/IBM/risk-atlas-nexus@main
