@@ -25,6 +25,12 @@ GAF Guard leverages resources and APIs from **Risk Atlas Nexus** to support key 
 
 Check out the official repo of [Risk Atlas Nexus](https://github.com/IBM/risk-atlas-nexus).
 
+## Agentic Workflow
+The present agentic workflow is as shown below.
+
+<img width="742" height="2092" alt="output" src="https://github.com/user-attachments/assets/93db9787-ef68-41af-a89b-ad206cb49691" />
+
+
 ## Documentation
 
 See the [**GAF Guard Wiki**](https://github.com/IBM/risk-atlas-nexus-demos/wiki/GAF-Guard) for full documentation, installation guide, operational details and other information.
