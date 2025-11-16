@@ -1,6 +1,6 @@
 [project]
 name = "gaf_guard"
-version = "0.1.0"
+version = "1.0.0"
 authors = [
     { name = "Seshu Tirupati", email = "seshutir@ie.ibm.com" },
     { name = "Dhaval Salwala", email = "dhaval.vinodbhai.salwala@ibm.com" },
@@ -41,6 +41,7 @@ dependencies = [
     "prettytable",
     "isort",
     "pre-commit",
+    "uvicorn==0.35.0"
 ]
 
 [project.optional-dependencies]

@@ -11,7 +11,8 @@ https://www.youtube.com/watch?v=M4JSkdFg6I0
 
 ## Architecture
 
-![90a729e8-e95e-4383-a36b-ffc84a81287e](https://github.com/user-attachments/assets/f0546c3d-cf95-49c8-8112-21308bf6f7e6)
+<img width="1253" height="753" alt="image" src="https://github.com/user-attachments/assets/ccd17307-4e51-490a-8459-4227e2450664" />
+
 
 ## Agent Communication Protocol (ACP)
 
@@ -24,6 +25,12 @@ For more information on ACP, visit the official [site](https://agentcommunicatio
 GAF Guard leverages resources and APIs from **Risk Atlas Nexus** to support key functions such as Risk Taxonomy, Risk Identification, Risk Questionnaire Predictions, Risk Assessment, and other AI Governance tasks. Risk Atlas Nexus serves as a central platform to unify and streamline diverse tools and resources related to the governance of foundation models. 
 
 Check out the official repo of [Risk Atlas Nexus](https://github.com/IBM/risk-atlas-nexus).
+
+## Agentic Workflow
+The present agentic workflow is as shown below.
+
+<img width="742" height="2092" alt="output" src="https://github.com/user-attachments/assets/93db9787-ef68-41af-a89b-ad206cb49691" />
+
 
 ## Documentation
 
@@ -39,7 +46,7 @@ This project targets python version ">=3.11, <3.12". You can download specific v
    cd risk-atlas-nexus-demos/gaf-guard
    conda create -n gaf-guard python=3.11
    conda activate gaf-guard
-   pip install -e .
+   pip install -e ".[ollama]" # depending on which inference engine to use [ollama, wml, vllm]
    ```
 
 2. Update the config variables and inference engine params in the server config file. Update LLM server (viz. ollama, vllm) credentials in the config file. Example server config is given below.
@@ -55,7 +62,7 @@ This project targets python version ">=3.11, <3.12". You can download specific v
 5. Start the GAF-Guard client
    - `python apps/cli/client.py --host localhost --port 8000`
 
-6. To run benchmark on already logged JSON trajectories
+6. To run benchmark on already logged JSON trajectories. `trails` directory is where all trials are stored.
    - `python apps/cli/run_benchmark.py --host localhost --port 8000 --trial-dir trials`
 
 ## Referencing the project

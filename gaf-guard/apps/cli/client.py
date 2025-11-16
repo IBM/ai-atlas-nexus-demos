@@ -58,7 +58,7 @@ run_configs = {
         "risk_generation_cot": "examples/data/chain_of_thought/risk_generation.json",
     },
     "DriftMonitoringAgent": {
-        "drift_threshold": 2,
+        "drift_threshold": 8,
         "drift_monitoring_cot": "examples/data/chain_of_thought/drift_monitoring.json",
     },
 }
@@ -125,7 +125,6 @@ async def run_stream(host, port):
                     ],
                 ):
                     processing.stop()
-                    step = None
                     if event.type == "message.part":
                         message = WorkflowStepMessage(**json.loads(event.part.content))
 
@@ -136,23 +135,30 @@ async def run_stream(host, port):
                                 **message.step_kwargs,
                             )
                         elif message.step_type == MessageType.STEP_STARTED:
-                            if message.step_name != "Risk Assessment":
-                                console.print(
-                                    f"\n[bold blue]Workflow Step: [bold white]{message.step_name}[/bold white]....Started",
-                                    **message.step_kwargs,
-                                )
+                            console.print(
+                                f"\n[bold blue]Workflow Step: [bold white]{message.step_name}[/bold white]....Started",
+                                **message.step_kwargs,
+                            )
                             if message.step_desc:
                                 console.print(message.step_desc, **message.step_kwargs)
                         elif message.step_type == MessageType.STEP_COMPLETED:
-                            if message.step_name != "Risk Assessment":
-                                console.print(
-                                    f"[bold blue]Workflow Step: [bold white]{message.step_name}[/bold white]....Completed",
-                                    **message.step_kwargs,
-                                )
+                            console.print(
+                                f"[bold blue]Workflow Step: [bold white]{message.step_name}[/bold white]....Completed",
+                                **message.step_kwargs,
+                            )
                         elif message.step_type == MessageType.STEP_DATA:
                             if isinstance(message.content, dict):
                                 for key, value in message.content.items():
-                                    if key != "risk_report":
+                                    if key == "risk_report":
+                                        for (
+                                            risk_report_key,
+                                            risk_report_value,
+                                        ) in value.items():
+                                            console.print(
+                                                f"[bold yellow]Check for {risk_report_key.title()}[/bold yellow]: {pprint(risk_report_key, risk_report_value)}",
+                                                **message.step_kwargs,
+                                            )
+                                    else:
                                         console.print(
                                             f"[bold yellow]{key.replace('_', ' ').title()}[/bold yellow]: {pprint(key, value)}",
                                             **message.step_kwargs,

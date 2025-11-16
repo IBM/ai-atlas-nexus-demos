@@ -14,7 +14,7 @@ from gaf_guard.toolkit.enums import Role
 class OrchestratorState(BaseModel):
     user_intent: Optional[str] = None
     prompt: Optional[str] = None
-    domain: Optional[str] = None
+    environment: Optional[str] = None
     drift_value: Optional[int] = None
     identified_risks: Optional[List[str]] = None
 

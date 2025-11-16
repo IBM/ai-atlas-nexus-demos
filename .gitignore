@@ -1,2 +1,21 @@
 ./venv
+
+# Ignore VSCode folder
+.vscode/
+.idea/
+
+# Ignore venv
+vrisk-atlas-nexus
+not for upload/
+
+# Ignore Python cache
+__pycache__/
+
 .DS_Store
+
+.python-version
+
+build
+
+*.egg-info/
+*.egg
