@@ -1,5 +1,5 @@
-from risk_atlas_nexus.blocks.inference import OllamaInferenceEngine
-from risk_atlas_nexus.blocks.inference.params import OllamaInferenceEngineParams
+from ai_atlas_nexus.blocks.inference import OllamaInferenceEngine
+from ai_atlas_nexus.blocks.inference.params import OllamaInferenceEngineParams
 
 from app.core.agents import (
     DriftMonitoringAgent,

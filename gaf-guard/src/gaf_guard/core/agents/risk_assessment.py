@@ -6,15 +6,15 @@ from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 from rich.console import Console
-from risk_atlas_nexus.blocks.inference import InferenceEngine
-from risk_atlas_nexus.library import RiskAtlasNexus
-from risk_atlas_nexus.ai_risk_ontology.datamodel.ai_risk_ontology import Risk
+from ai_atlas_nexus.blocks.inference import InferenceEngine
+from ai_atlas_nexus.library import AIAtlasNexus
+from ai_atlas_nexus.ai_risk_ontology.datamodel.ai_risk_ontology import Risk
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
 
 
 console = Console()
-risk_atlas_nexus = RiskAtlasNexus()
+ai_atlas_nexus = AIAtlasNexus()
 
 
 def parse_model_assessment(response):
@@ -41,7 +41,7 @@ def assess_risk(
     risks: List[Risk] = list(
         filter(
             lambda risk: risk.name in state.identified_risks,
-            risk_atlas_nexus.get_all_risks(taxonomy=taxonomy),
+            ai_atlas_nexus.get_all_risks(taxonomy=taxonomy),
         )
     )
 

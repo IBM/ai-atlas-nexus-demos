@@ -3,7 +3,7 @@ from typing import Dict
 
 from langgraph.checkpoint.memory import MemorySaver
 from rich.console import Console
-from risk_atlas_nexus.blocks.inference.params import InferenceEngineCredentials
+from ai_atlas_nexus.blocks.inference.params import InferenceEngineCredentials
 
 from gaf_guard.config import get_configuration
 from gaf_guard.toolkit.logging import configure_logger
@@ -13,7 +13,7 @@ console = Console()
 config = get_configuration()
 logger = configure_logger(__name__)
 
-inference_module = importlib.import_module("risk_atlas_nexus.blocks.inference")
+inference_module = importlib.import_module("ai_atlas_nexus.blocks.inference")
 agent_module = importlib.import_module("gaf_guard.core.agents")
 
 

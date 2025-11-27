@@ -5,16 +5,16 @@ from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 from rich.console import Console
-from risk_atlas_nexus.blocks.inference import InferenceEngine
-from risk_atlas_nexus.data import load_resource
-from risk_atlas_nexus.library import RiskAtlasNexus
+from ai_atlas_nexus.blocks.inference import InferenceEngine
+from ai_atlas_nexus.data import load_resource
+from ai_atlas_nexus.library import AIAtlasNexus
 
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
 
 
 console = Console()
-risk_atlas_nexus = RiskAtlasNexus()
+ai_atlas_nexus = AIAtlasNexus()
 
 
 # Graph state
@@ -34,7 +34,7 @@ def get_usecase_domain(
     state: RiskGenerationState,
     config: RunnableConfig,
 ):
-    domain = risk_atlas_nexus.identify_domain_from_usecases(
+    domain = ai_atlas_nexus.identify_domain_from_usecases(
         [state.user_intent], inference_engine, verbose=False
     )[0]
 
@@ -55,7 +55,7 @@ def generate_zero_shot(
         .get("risk_questionnaire_cot", load_resource("risk_questionnaire_cot.json"))
     )
 
-    responses = risk_atlas_nexus.generate_zero_shot_risk_questionnaire_output(
+    responses = ai_atlas_nexus.generate_zero_shot_risk_questionnaire_output(
         state.user_intent,
         risk_questionnaire_cot[1:],
         inference_engine,
@@ -91,7 +91,7 @@ def generate_few_shot(
         .get("risk_questionnaire_cot", load_resource("risk_questionnaire_cot.json"))
     )
 
-    responses = risk_atlas_nexus.generate_few_shot_risk_questionnaire_output(
+    responses = ai_atlas_nexus.generate_few_shot_risk_questionnaire_output(
         state.user_intent,
         risk_questionnaire_cot[1:],
         inference_engine,
@@ -144,7 +144,7 @@ def identify_risks(
     state: RiskGenerationState,
     config: RunnableConfig,
 ):
-    risks = risk_atlas_nexus.identify_risks_from_usecases(
+    risks = ai_atlas_nexus.identify_risks_from_usecases(
         [state.user_intent], inference_engine, taxonomy=taxonomy, zero_shot_only=True
     )
 
@@ -158,7 +158,7 @@ def identify_ai_tasks(
     state: RiskGenerationState,
     config: RunnableConfig,
 ):
-    ai_tasks = risk_atlas_nexus.identify_ai_tasks_from_usecases(
+    ai_tasks = ai_atlas_nexus.identify_ai_tasks_from_usecases(
         [state.user_intent], inference_engine, verbose=False
     )[0]
 

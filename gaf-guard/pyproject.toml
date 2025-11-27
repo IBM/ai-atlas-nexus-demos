@@ -28,7 +28,7 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
 ]
 dependencies = [
-    "risk-atlas-nexus",
+    "ai-atlas-nexus",
     "acp-sdk",
     "langchain",
     "langgraph",
@@ -58,8 +58,8 @@ combine_star = true
 lines_after_imports = 2
 
 [project.urls]
-Homepage = "https://github.com/IBM/risk-atlas-nexus-demos/tree/main/gaf-guard"
-Documentation = "https://github.com/IBM/risk-atlas-nexus-demos/tree/main/gaf-guard"
+Homepage = "https://github.com/IBM/ai-atlas-nexus-demos/tree/main/gaf-guard"
+Documentation = "https://github.com/IBM/ai-atlas-nexus-demos/tree/main/gaf-guard"
 
 [tool.setuptools.package-data]
 src = ["*.json"]

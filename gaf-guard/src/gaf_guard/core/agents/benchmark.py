@@ -14,18 +14,18 @@ from jinja2 import Template
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
-from risk_atlas_nexus.blocks.prompt_builder import ZeroShotPromptBuilder
-from risk_atlas_nexus.blocks.prompt_templates import (
+from ai_atlas_nexus.blocks.prompt_builder import ZeroShotPromptBuilder
+from ai_atlas_nexus.blocks.prompt_templates import (
     AI_TASKS_TEMPLATE,
     QUESTIONNAIRE_COT_TEMPLATE,
 )
-from risk_atlas_nexus.data import load_resource
-from risk_atlas_nexus.library import RiskAtlasNexus
+from ai_atlas_nexus.data import load_resource
+from ai_atlas_nexus.library import AIAtlasNexus
 
 from gaf_guard.core.agents import Agent
 
 
-risk_atlas_nexus = RiskAtlasNexus()
+ai_atlas_nexus = AIAtlasNexus()
 
 model = OllamaModel(model="granite3.2:8b")
 
@@ -142,7 +142,7 @@ def process_trials(gt_data: List, state: BenchmarkAgentState, config: RunnableCo
                         }
                     )
                 elif gt_task["step_name"] == "Risk Generation":
-                    risks = risk_atlas_nexus.get_all_risks(taxonomy="ibm-risk-atlas")
+                    risks = ai_atlas_nexus.get_all_risks(taxonomy="ibm-risk-atlas")
                     results.append(
                         {
                             "trial": "Trial-" + str(trial_index),

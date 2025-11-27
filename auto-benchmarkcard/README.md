@@ -14,7 +14,7 @@ The system automates the creation of benchmark documentation through a three-pha
 
 **Extraction Phase:** The workflow aggregates metadata from multiple sources including Unitxt, Hugging Face, and academic papers, extracting benchmark identifiers, dataset information, and documentation.
 
-**Composing Phase:** An LLM-powered composer synthesizes all extracted information into a structured BenchmarkCard, intelligently combining the extracted data into cohesive documentation. Based on that BenchmarkCard, Risk Atlas Nexus tags potential risks associated with it.
+**Composing Phase:** An LLM-powered composer synthesizes all extracted information into a structured BenchmarkCard, intelligently combining the extracted data into cohesive documentation. Based on that BenchmarkCard, AI Atlas Nexus tags potential risks associated with it.
 
 **Validation Phase:** The generated card is broken down into atomic claims. Search algorithms retrieve relevant evidence for each claim from the extraction phase data, which an LLM reranks and filters for quality. These claim-evidence pairs are then sent to FactReasoner, which classifies them as supported, contradicted, or neutral with confidence scores. Sections with low factuality scores or missing evidence are flagged for human review through the BenchmarkCard Editor, enabling iterative refinement until publication-ready documentation is achieved.
 
@@ -42,7 +42,7 @@ Each component acts as a "worker" in the LangGraph workflow, with graph state up
 ### Composer Tool
 - Uses an LLM to generate structured BenchmarkCards from available data
 
-### Risk Atlas Nexus Tool
+### AI Atlas Nexus Tool
 - Maps benchmarks to AI risk categories using IBM Risk Atlas
 
 ### RAG Tool
@@ -83,7 +83,7 @@ output/
     │   ├── risk_enhanced/           # Risk-enhanced benchmark cards
     │   ├── rag/                     # Evidence retrieval and atomic statements
     │   ├── factreasoner/            # Factuality verification scores
-    │   └── risk_atlas_nexus/        # AI risk assessment results
+    │   └── ai_atlas_nexus/        # AI risk assessment results
     └── auto_benchmarkcard/               # Final benchmark cards
         └── benchmark_card_<name>.json         # Complete card with flagged fields section
 ```
@@ -167,7 +167,7 @@ auto_benchmarkcard/
 │           ├── composer/
 │           ├── rag/
 │           ├── factreasoner/
-│           └── risk_atlas_nexus/
+│           └── ai_atlas_nexus/
 ├── external/                   # External dependencies
 │   └── merlin/                # Merlin inference engine
 │       └── bin/merlin
@@ -292,7 +292,7 @@ All outputs are organized in timestamped session directories. Key files include:
 ### Tool Outputs
 `output/<name>_<timestamp>/tool_output/`
 - `rag/formatted_rag_results_<name>.jsonl` - Evidence and atomic statements
-- `risk_atlas_nexus/risks_<name>.json` - AI risk assessment results
+- `ai_atlas_nexus/risks_<name>.json` - AI risk assessment results
 - `factreasoner/factuality_results_<name>.json` - Factuality verification scores
 - `unitxt/<name>.json` - UnitXT benchmark metadata
 - `hf/<name>.json` - Hugging Face dataset metadata

@@ -10,7 +10,7 @@ from linkml_runtime.utils.yamlutils import YAMLRoot
 from pydantic import BaseModel
 
 
-from risk_atlas_nexus.ai_risk_ontology.datamodel.ai_risk_ontology import (
+from ai_atlas_nexus.ai_risk_ontology.datamodel.ai_risk_ontology import (
     Container,
 )
 

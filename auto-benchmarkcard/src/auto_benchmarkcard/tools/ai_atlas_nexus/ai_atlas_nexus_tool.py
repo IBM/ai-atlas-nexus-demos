@@ -1,6 +1,6 @@
-"""Risk Atlas Nexus integration for AI risk identification.
+"""AI Atlas Nexus integration for AI risk identification.
 
-This module integrates the Risk Atlas Nexus library to automatically identify
+This module integrates the AI Atlas Nexus library to automatically identify
 relevant AI risks based on benchmark metadata. It creates use case descriptions
 from benchmark cards and applies risk detection models to map benchmarks to
 specific risks in the IBM AI Risk Atlas taxonomy.
@@ -24,14 +24,14 @@ logging.getLogger("LiteLLM").setLevel(logging.ERROR)
 logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.ERROR)
 
-from risk_atlas_nexus.blocks.risk_detector import BenchmarkRiskDetector
-from risk_atlas_nexus.library import RiskAtlasNexus
+from ai_atlas_nexus.blocks.risk_detector import BenchmarkRiskDetector
+from ai_atlas_nexus.library import AIAtlasNexus
 
 logger = logging.getLogger(__name__)
 
 
 def identify_risks_with_benchmark_detector(
-    risk_atlas_nexus: RiskAtlasNexus,
+    ai_atlas_nexus: AIAtlasNexus,
     usecases: List[str],
     inference_engine,
     taxonomy: str = "ibm-ai-risk-atlas",
@@ -44,7 +44,7 @@ def identify_risks_with_benchmark_detector(
     on relevance to the provided use cases.
 
     Args:
-        risk_atlas_nexus: RiskAtlasNexus library instance.
+        ai_atlas_nexus: AIAtlasNexus library instance.
         usecases: List of use case descriptions from benchmark metadata.
         inference_engine: Inference engine for risk classification.
         taxonomy: Risk taxonomy identifier (default: "ibm-ai-risk-atlas").
@@ -61,7 +61,7 @@ def identify_risks_with_benchmark_detector(
     """
     try:
         # Get all risks for the specified taxonomy
-        all_risks = risk_atlas_nexus.get_all_risks(taxonomy)
+        all_risks = ai_atlas_nexus.get_all_risks(taxonomy)
 
         # Create the custom benchmark risk detector
         benchmark_detector = BenchmarkRiskDetector(
@@ -103,7 +103,7 @@ def create_inference_engine():
             verbose=False  # Disable progress bars for cleaner output
         )
 
-        # Return the underlying risk-atlas-nexus engine
+        # Return the underlying ai-atlas-nexus engine
         # BenchmarkRiskDetector needs the raw engine, not the wrapper
         return handler.engine
 
@@ -118,7 +118,7 @@ def create_inference_engine():
 def identify_risks_from_benchmark_metadata(
     benchmark_card: Dict[str, Any], taxonomy: str = "ibm-risk-atlas", max_risk: int = 5
 ) -> Optional[List[Dict[str, Any]]]:
-    """Identify risks from benchmark metadata using Risk Atlas Nexus.
+    """Identify risks from benchmark metadata using AI Atlas Nexus.
 
     Args:
         benchmark_card: The composed benchmark card containing metadata.
@@ -135,8 +135,8 @@ def identify_risks_from_benchmark_metadata(
             logger.warning("No inference engine available - skipping risk identification")
             return None
 
-        # Create Risk Atlas Nexus instance
-        risk_atlas_nexus = RiskAtlasNexus()
+        # Create AI Atlas Nexus instance
+        ai_atlas_nexus = AIAtlasNexus()
 
         # Extract usecase description from benchmark metadata
         usecase = create_usecase_from_benchmark_card(benchmark_card)
@@ -148,7 +148,7 @@ def identify_risks_from_benchmark_metadata(
 
         # Use custom benchmark risk detector instead of generic one
         risks = identify_risks_with_benchmark_detector(
-            risk_atlas_nexus=risk_atlas_nexus,
+            ai_atlas_nexus=ai_atlas_nexus,
             usecases=[usecase],
             inference_engine=inference_engine,
             taxonomy=taxonomy,
@@ -296,7 +296,7 @@ def identify_and_integrate_risks(benchmark_card: Dict[str, Any]) -> Dict[str, An
         Updated benchmark card with risks (or original if identification fails).
     """
     try:
-        logger.debug("🔄 Running Risk Atlas Nexus analysis...")
+        logger.debug("🔄 Running AI Atlas Nexus analysis...")
 
         # Identify risks
         risks = identify_risks_from_benchmark_metadata(benchmark_card)

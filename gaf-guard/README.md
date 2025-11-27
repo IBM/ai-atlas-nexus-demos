@@ -20,11 +20,11 @@ GAF Guard utilizes the [**ACP**](https://github.com/i-am-bee/acp) protocol to fa
 
 For more information on ACP, visit the official [site](https://agentcommunicationprotocol.dev/introduction/welcome) or check out this [blog post](https://www.ibm.com/think/topics/agent-communication-protocol).
 
-## Risk Atlas Nexus
+## AI Atlas Nexus
 
-GAF Guard leverages resources and APIs from **Risk Atlas Nexus** to support key functions such as Risk Taxonomy, Risk Identification, Risk Questionnaire Predictions, Risk Assessment, and other AI Governance tasks. Risk Atlas Nexus serves as a central platform to unify and streamline diverse tools and resources related to the governance of foundation models. 
+GAF Guard leverages resources and APIs from **AI Atlas Nexus** to support key functions such as Risk Taxonomy, Risk Identification, Risk Questionnaire Predictions, Risk Assessment, and other AI Governance tasks. AI Atlas Nexus serves as a central platform to unify and streamline diverse tools and resources related to the governance of foundation models. 
 
-Check out the official repo of [Risk Atlas Nexus](https://github.com/IBM/risk-atlas-nexus).
+Check out the official repo of [AI Atlas Nexus](https://github.com/IBM/ai-atlas-nexus).
 
 ## Agentic Workflow
 The present agentic workflow is as shown below.
@@ -34,7 +34,7 @@ The present agentic workflow is as shown below.
 
 ## Documentation
 
-See the [**GAF Guard Wiki**](https://github.com/IBM/risk-atlas-nexus-demos/wiki/GAF-Guard) for full documentation, installation guide, operational details and other information.
+See the [**GAF Guard Wiki**](https://github.com/IBM/ai-atlas-nexus-demos/wiki/GAF-Guard) for full documentation, installation guide, operational details and other information.
 
 ## Installation and Running the CLI App
 
@@ -42,8 +42,8 @@ This project targets python version ">=3.11, <3.12". You can download specific v
 
 1. Set up `conda` or any python virtual environment and install GAF-Guard
    ```
-   git clone git@github.com:IBM/risk-atlas-nexus-demos.git
-   cd risk-atlas-nexus-demos/gaf-guard
+   git clone git@github.com:IBM/ai-atlas-nexus-demos.git
+   cd ai-atlas-nexus-demos/gaf-guard
    conda create -n gaf-guard python=3.11
    conda activate gaf-guard
    pip install -e ".[ollama]" # depending on which inference engine to use [ollama, wml, vllm]
@@ -87,4 +87,4 @@ GAF-Guard is under Apache 2.0 license.
 
 ## IBM ❤️ Open Source AI
 
-GAF-Guard has been brought to you by IBM. Please contact [Risk Atlas Nexus](mailto:risk-atlas-nexus@ibm.com) Team for any query.
+GAF-Guard has been brought to you by IBM. Please contact [AI Atlas Nexus](mailto:ai-atlas-nexus@ibm.com) Team for any query.

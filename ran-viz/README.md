@@ -1,6 +1,6 @@
-## Risk Atlas Nexus graph visualisation
+## AI Atlas Nexus graph visualisation
 
-This graph visualisation represents a network of the nodes in the Risk Atlas Nexus graph. Each node represents a graph entity, and each edge a particular type of relationship between them.
+This graph visualisation represents a network of the nodes in the AI Atlas Nexus graph. Each node represents a graph entity, and each edge a particular type of relationship between them.
 
 Nodes sizes are related to their betweenness centrality. More central nodes (ie. bigger nodes) are important crossing points in the network. Finally, you can click a node to open the related uri.
 

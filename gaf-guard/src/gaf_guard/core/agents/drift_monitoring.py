@@ -4,7 +4,7 @@ from jinja2 import Template
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
-from risk_atlas_nexus.blocks.inference import InferenceEngine
+from ai_atlas_nexus.blocks.inference import InferenceEngine
 
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step

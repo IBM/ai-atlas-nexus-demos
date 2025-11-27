@@ -14,7 +14,7 @@ const DescriptionPanel: FC = () => {
       }
     >
       <p>
-        This map represents a <i>network</i> of the nodes in the Risk Atlas Nexus graph. Each{" "}
+        This map represents a <i>network</i> of the nodes in the AI Atlas Nexus graph. Each{" "}
         <i>node</i> represents a graph entity, and each edge a particular type of relationship between them
         .
       </p>

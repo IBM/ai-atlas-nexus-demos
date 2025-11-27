@@ -172,7 +172,7 @@ def enable_debug_logging() -> None:
         "sentence_transformers",
         "fact_reasoner",
         "FactReasoner",
-        "risk_atlas_nexus",
+        "ai_atlas_nexus",
     ]
 
     for logger_name in debug_loggers:
@@ -645,7 +645,7 @@ def process_benchmark(
     • [bold cyan]HuggingFace Extraction[/bold cyan] - Extract dataset information
     • [bold cyan]Academic Paper Processing[/bold cyan] - Download and analyze papers
     • [bold cyan]BenchmarkCard Composition with LLM[/bold cyan] - Generate structured benchmark cards
-    • [bold cyan]AI Risk Assessment[/bold cyan] - Identify risks via Risk Atlas Nexus
+    • [bold cyan]AI Risk Assessment[/bold cyan] - Identify risks via AI Atlas Nexus
     • [bold cyan]RAG Evidence Retrieval[/bold cyan] - Gather supporting evidence
     • [bold cyan]Factual Accuracy Validation[/bold cyan] - Verify claims with FactReasoner
 
@@ -721,7 +721,7 @@ def process_benchmark(
                 "Generate structured benchmark card",
                 "Ready",
             ),
-            ("6. Risk Identification", "Identify risks via Risk Atlas Nexus", "Ready"),
+            ("6. Risk Identification", "Identify risks via AI Atlas Nexus", "Ready"),
             (
                 "7. RAG Evidence Retrieval",
                 "Gather supporting evidence for validation",
@@ -1112,7 +1112,7 @@ def show_session(
             "hf": "HuggingFace dataset info",
             "docling": "Processed academic papers",
             "risk_enhanced": "Risk-enhanced benchmark cards",
-            "risk_atlas_nexus": "AI risk assessment results",
+            "ai_atlas_nexus": "AI risk assessment results",
             "rag": "Evidence retrieval results",
             "factreasoner": "Factuality verification scores",
         }
@@ -1294,7 +1294,7 @@ def validate_setup(
             ("config", "Configuration management"),
             ("tools.unitxt.unitxt_tool", "UnitXT benchmark lookup"),
             ("tools.factreasoner.factreasoner_tool", "FactReasoner validation"),
-            ("risk_atlas_nexus.library", "Risk Atlas Nexus integration"),
+            ("ai_atlas_nexus.library", "AI Atlas Nexus integration"),
             ("typer", "CLI framework"),
         ]
 
