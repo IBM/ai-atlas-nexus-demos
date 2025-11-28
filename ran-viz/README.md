@@ -1,10 +1,10 @@
-## Risk Atlas Nexus graph visualisation
+## AI Atlas Nexus graph visualisation
 
-This graph visualisation represents a network of the nodes in the Risk Atlas Nexus graph. Each node represents a graph entity, and each edge a particular type of relationship between them.
+This graph visualisation represents a network of the nodes in the AI Atlas Nexus graph. Each node represents a graph entity, and each edge a particular type of relationship between them.
 
-Nodes sizes are related to their betweenness centrality. More central nodes (ie. bigger nodes) are important crossing points in the network. Finally, You can click a node to open the related uri.
+Nodes sizes are related to their betweenness centrality. More central nodes (ie. bigger nodes) are important crossing points in the network. Finally, you can click a node to open the related uri.
 
-This visualisation implemation was based on a [Sigma.js](https://github.com/jacomyal/sigma.js/tree/main/packages/demo) demo on GitHub.
+This visualisation implementation was based on a [Sigma.js](https://github.com/jacomyal/sigma.js/tree/main/packages/demo) demo on GitHub.
 
 
 ## Prerequisites
@@ -36,13 +36,13 @@ uv pip install -r requirements.txt
 ```
 
 ## Generate the nodes and edges 
-Create the content that will be displayed in the graph
+Create the content that will be displayed in the graph.
 
 ```commandline
 uv run app.py
 ```
 
-The output should be available as a json file 
+The output should be available as a json file. 
 `OUTPUT_FILE = "../front-end/demo/public/ai-risk-ontology.json"`
 
 ### 

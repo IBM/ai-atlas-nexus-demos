@@ -1,11 +1,10 @@
 from functools import partial
-from typing import Optional
 
 from jinja2 import Template
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
-from risk_atlas_nexus.blocks.inference import InferenceEngine
+from ai_atlas_nexus.blocks.inference import InferenceEngine
 
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
@@ -14,10 +13,9 @@ from gaf_guard.templates import DRIFT_COT_TEMPLATE
 
 # Graph state
 class DriftMonitoringState(BaseModel):
-    domain: str
     prompt: str
+    environment: str
     drift_value: int = 0
-    incident_message: Optional[str] = None
 
 
 # Nodes
@@ -47,7 +45,9 @@ def check_prompt_relevance(
     )
 
     prompt_str = Template(DRIFT_COT_TEMPLATE).render(
-        prompt=state.prompt, examples=drift_monitoring_cot, domain=state.domain
+        prompt=state.prompt,
+        examples=drift_monitoring_cot,
+        environment=state.environment,
     )
 
     response = inference_engine.chat(
@@ -55,7 +55,7 @@ def check_prompt_relevance(
         response_format={
             "type": "object",
             "properties": {
-                "answer": {"type": "string"},
+                "answer": {"type": "string", "enum": [state.environment, "other"]},
                 "explanation": {"type": "string"},
                 "question": {"type": "string"},
             },
@@ -82,15 +82,11 @@ def drift_incident_reporting(state: DriftMonitoringState, config: RunnableConfig
     )
 
     if state.drift_value > drift_threshold:
-        incident_alert = f"Potential drift in prompts identified."
+        incident_message = f"Potential drift in prompts identified."
     else:
         incident_message = f"No drift detected."
 
-    return (
-        {"incident_message": incident_message}
-        if "incident_message" in locals()
-        else {"incident_alert": incident_alert}
-    )
+    return {"incident_message": incident_message}
 
 
 class DriftMonitoringAgent(Agent):

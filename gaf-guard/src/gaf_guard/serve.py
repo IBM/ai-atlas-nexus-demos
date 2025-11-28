@@ -71,13 +71,13 @@ def main() -> None:
             Link(
                 type=LinkType.SOURCE_CODE,
                 url=AnyUrl(
-                    "https://github.com/IBM/risk-atlas-nexus-demos/blob/main/gaf-guard/gaf_guard/agents/orchestrator.py"
+                    "https://github.com/IBM/ai-atlas-nexus-demos/blob/main/gaf-guard/gaf_guard/agents/orchestrator.py"
                 ),
             ),
             Link(
                 type=LinkType.HOMEPAGE,
                 url=AnyUrl(
-                    "https://github.com/IBM/risk-atlas-nexus-demos/tree/main/gaf-guard"
+                    "https://github.com/IBM/ai-atlas-nexus-demos/tree/main/gaf-guard"
                 ),
             ),
         ],
@@ -197,7 +197,7 @@ def serve(config_file):
     )
     rprint(
         Panel(
-            f"Please follow the GAF Guard Wiki at https://github.com/IBM/risk-atlas-nexus-demos/wiki/GAF-Guard to learn how to send and consume data to/from GAF Guard.",
+            f"Please follow the GAF Guard Wiki at https://github.com/IBM/ai-atlas-nexus-demos/wiki/GAF-Guard to learn how to send and consume data to/from GAF Guard.",
             title="GAF-Guard Wiki",
             title_align="center",
         )

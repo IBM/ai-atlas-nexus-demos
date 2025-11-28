@@ -7,8 +7,9 @@ DRIFT_COT_TEMPLATE = """
         Answer: {{ example.answer }}
         Explanation: {{ example.explanation }}
 {% endfor %}
-        Question: {{ prompt }} Consider a binary text classification problem. which class does the prompt belong? Strictly choose one of the two classes. The options are: (1) {{ domain }} or (2) other
-"""
+        Consider a binary text classification problem. which environment does the prompt belong? Strictly choose one of the two classes. The options are: (1) {{ environment }} or (2) other
+        Question: For the prompt:{{ prompt }} 
+        Answer: """
 
 RISKS_GENERATION_COT_TEMPLATE = """
         You are are an expert at AI risk classification. I want you to play the role of a risk compliance officer.

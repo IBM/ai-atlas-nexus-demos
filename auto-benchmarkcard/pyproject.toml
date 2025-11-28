@@ -60,7 +60,7 @@ dependencies = [
     "networkx>=3.4.0",
     "ollama>=0.5.0",
     "fact_reasoner @ git+https://github.com/arishofmann/FactReasoner.git",
-    "risk-atlas-nexus[rits]",
+    "ai-atlas-nexus[rits]",
 ]
 
 [project.optional-dependencies]

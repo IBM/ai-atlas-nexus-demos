@@ -1,6 +1,6 @@
-"""Thin wrapper around risk-atlas-nexus inference engines.
+"""Thin wrapper around ai-atlas-nexus inference engines.
 
-This module provides a lightweight interface to risk-atlas-nexus inference engines
+This module provides a lightweight interface to ai-atlas-nexus inference engines
 with additional support for structured output and LangChain integration.
 """
 
@@ -13,14 +13,14 @@ from dotenv import load_dotenv
 from langchain_core.runnables import Runnable
 from pydantic import BaseModel
 
-# Import inference engines from risk-atlas-nexus
-from risk_atlas_nexus.blocks.inference import (
+# Import inference engines from ai-atlas-nexus
+from ai_atlas_nexus.blocks.inference import (
     OllamaInferenceEngine,
     RITSInferenceEngine,
     VLLMInferenceEngine,
     WMLInferenceEngine,
 )
-from risk_atlas_nexus.blocks.inference.params import (
+from ai_atlas_nexus.blocks.inference.params import (
     OllamaInferenceEngineParams,
     RITSInferenceEngineParams,
     VLLMInferenceEngineParams,
@@ -39,7 +39,7 @@ DEFAULT_WML_MODEL = os.getenv("WML_MODEL", "ibm/granite-13b-chat-v2")
 
 
 class LLMHandler:
-    """Thin wrapper for risk-atlas-nexus inference engines with structured output support.
+    """Thin wrapper for ai-atlas-nexus inference engines with structured output support.
 
     Provides a unified interface to multiple inference backends (RITS, Ollama, vLLM, WML)
     with additional functionality for structured output generation and LangChain integration.
@@ -97,13 +97,13 @@ class LLMHandler:
             )
 
         # Prepare parameters - always create an instance of params_class
-        # risk-atlas-nexus expects a dict-like object, not None
+        # ai-atlas-nexus expects a dict-like object, not None
         if parameters:
             params = params_class(parameters) if isinstance(parameters, dict) else parameters
         else:
             params = params_class()  # Empty params dict
 
-        # Create the inference engine (delegating to risk-atlas-nexus)
+        # Create the inference engine (delegating to ai-atlas-nexus)
         self.engine = engine_class(
             model_name_or_path=self.model_name,
             credentials=credentials,
@@ -145,7 +145,7 @@ class LLMHandler:
         """Generate structured output using Pydantic model.
 
         This method adds structured output capability that's not in the base
-        risk-atlas-nexus engines. It generates JSON conforming to the schema
+        ai-atlas-nexus engines. It generates JSON conforming to the schema
         and validates it with Pydantic.
 
         Args:

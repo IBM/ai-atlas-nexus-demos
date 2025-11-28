@@ -3,7 +3,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0) [![](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/) <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
 ## Overview
-A quick way to ingest data from Risk Atlas Nexus into an Neo4j database, using the exported cypher queries. 
+A quick way to ingest data from AI Atlas Nexus into an Neo4j database, using the exported cypher queries. 
 
 ## 1 Get started
 ### 1.1 Set up Neo4j
@@ -13,13 +13,13 @@ A quick way to ingest data from Risk Atlas Nexus into an Neo4j database, using t
 docker pull neo4j:latest
 ```
 
-We want to put the output of the risk atlas nexus cypher queries the examples/ai-risk-ontology.cypher file in the local folder ./examples.
+We want to put the output of the AI Atlas Nexus cypher queries the examples/ai-risk-ontology.cypher file in the local folder ./examples.
 
 Start a Neo4j container and mount the ./examples folder inside the container:
 
 2. Run image
 ``` 
-docker run --name ran_neo4j --rm --volume <YOUR_WORKSPACE_PATH>/risk-atlas-nexus-demos/neo4j-db/examples:/examples --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/riskatlasnexus neo4j:latest
+docker run --name ran_neo4j --rm --volume <YOUR_WORKSPACE_PATH>/ai-atlas-nexus-demos/neo4j-db/examples:/examples --publish=7474:7474 --publish=7687:7687 --env NEO4J_AUTH=neo4j/aiatlasnexus neo4j:latest
 ```
 
 
@@ -34,7 +34,7 @@ docker ps -a
 use the Cypher Shell tool 
 
 ```
-docker exec --interactive --tty ran_neo4j cypher-shell -u neo4j -p riskatlasnexus
+docker exec --interactive --tty ran_neo4j cypher-shell -u neo4j -p aiatlasnexus
 ```
 then use the `:source` command to run the example script in the cypher-shell
 

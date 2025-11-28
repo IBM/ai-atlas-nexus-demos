@@ -56,8 +56,8 @@ def setup_logging_suppression(debug_mode=False):
             "torch",
             "faiss.loader",
             "faiss",
-            "risk_atlas_nexus",
-            "RiskAtlasNexus",  # Risk Atlas library logger
+            "ai_atlas_nexus",
+            "AIAtlasNexus",  # Risk Atlas library logger
             "LiteLLM",  # Main LiteLLM logger
             "litellm",  # Alternative spelling
             "litellm.llms",
@@ -81,7 +81,7 @@ def setup_logging_suppression(debug_mode=False):
             "benchmarkcard.tools.docling.docling_tool",
             "benchmarkcard.tools.composer.composer_tool",
             "benchmarkcard.tools.rag.rag_retriever",
-            "benchmarkcard.tools.risk_atlas_nexus.risk_atlas_nexus_tool",
+            "benchmarkcard.tools.ai_atlas_nexus.ai_atlas_nexus_tool",
             "benchmarkcard.tools.factreasoner.factreasoner_tool",
         ]
 
@@ -126,7 +126,7 @@ from auto_benchmarkcard.tools.rag.format_converter import (
 )
 from auto_benchmarkcard.tools.rag.indexer import MetadataIndexer
 from auto_benchmarkcard.tools.rag.rag_retriever import RAGRetriever
-from auto_benchmarkcard.tools.risk_atlas_nexus.risk_atlas_nexus_tool import identify_and_integrate_risks
+from auto_benchmarkcard.tools.ai_atlas_nexus.ai_atlas_nexus_tool import identify_and_integrate_risks
 from auto_benchmarkcard.tools.unitxt import unitxt_tool
 
 # Configure logging
@@ -717,7 +717,7 @@ def run_composer(state: GraphState):
 
 
 def run_risk_identification(state: GraphState):
-    """Identify risks using risk-atlas-nexus and integrate them into the benchmark card.
+    """Identify risks using ai-atlas-nexus and integrate them into the benchmark card.
 
     Args:
         state: Current workflow state containing composed_card.
@@ -758,7 +758,7 @@ def run_risk_identification(state: GraphState):
             }
             risk_filename = f"risks_{sanitize_benchmark_name(state['query'])}.json"
             risk_output_file = state["output_manager"].save_tool_output(
-                risk_output, "risk_atlas_nexus", risk_filename
+                risk_output, "ai_atlas_nexus", risk_filename
             )
             logger.info("Risk identification results saved to: %s", risk_output_file)
 

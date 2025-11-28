@@ -1,13 +1,13 @@
 # Convenience script to export a json graph version or IBM AI risk atlas from the yaml
-# in src/risk_atlas_nexus/data/knowledge_graph
+# in src/ai_atlas_nexus/data/knowledge_graph
 
-from risk_atlas_nexus import RiskAtlasNexus
+from ai_atlas_nexus import AIAtlasNexus
 from util.json_graph_dumper import JSONGraphDumper
 
 OUTPUT_FILE = "../front-end/demo/public/ai-risk-ontology.json"
-SCHEMA_FILE = "https://raw.githubusercontent.com/IBM/risk-atlas-nexus/refs/heads/main/src/risk_atlas_nexus/ai_risk_ontology/schema/ai-risk-ontology.yaml"
+SCHEMA_FILE = "https://raw.githubusercontent.com/IBM/ai-atlas-nexus/refs/heads/main/src/ai_atlas_nexus/ai_risk_ontology/schema/ai-risk-ontology.yaml"
 
-ran = RiskAtlasNexus()
+ran = AIAtlasNexus()
 
 # export IBM AI risk atlas from graph
 container = ran._ontology
