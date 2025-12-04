@@ -55,7 +55,7 @@ dependencies = [
     "langchain_huggingface",
     "thefuzz",
     "bert_score",
-    "ai-atlas-nexus [ollama] @ git+https://github.com/IBM/ai-atlas-nexus"
+    "ai-atlas-nexus [ollama]"
 ]
 
 [tool.setuptools.dynamic]
