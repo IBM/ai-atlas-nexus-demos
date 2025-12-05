@@ -1,0 +1,77 @@
+[project]
+name = "risk-policy-distillation"
+authors = [
+    { name = "Jasmina Gajcin", email = "Jasmina.Gajcin2@ibm.com" },
+]
+description = ""
+dynamic = [
+    "version",
+    "readme",
+]
+requires-python = ">=3.11, <=3.12.12"
+
+license = { text = "MIT" }
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "datasets",
+    "IPython", 
+    "html2text", 
+    "bs4", 
+    "pypdf", 
+    "langchain_community", 
+    "spacy", 
+    "pgmpy", 
+    "nltk", 
+    "torch", 
+    "pytorch_lightning", 
+    "litellm", 
+    "sentence_transformers", 
+    "langchain",
+    "openai",
+    "dotenv",
+    "lime",
+    "shap",
+    "fairlearn",
+    "numpy",
+    "pandas",
+    "click",
+    "scipy",
+    "transformers",
+    "tqdm",
+    "chromadb",
+    "Adversary",
+
+    # fact reasoner libs
+    "langchain_huggingface",
+    "thefuzz",
+    "bert_score",
+    "ai-atlas-nexus [ollama]"
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "risk_policy_distillation.__version__" }
+readme = { file = [
+    "README.md",
+], content-type = "text/markdown" }
+
+[tool.setuptools.packages.find]
+where = [
+    "src",
+]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+remove_redundant_aliases = true
+group_by_package = true
+combine_star = true
+lines_after_imports = 2

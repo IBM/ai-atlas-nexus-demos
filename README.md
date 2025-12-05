@@ -1,4 +1,3 @@
-<!-- This should be the location of the title of the repository, normally the short name -->
 # AI Atlas Nexus Demos
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0) [![](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/) <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
@@ -34,6 +33,7 @@ Note that all contributions to this project are [released][released] to the publ
 
 | Name| Tags | Description|
 | :--- |  :--- | :--- |
+| [Risk Policy Distillation](https://github.com/IBM/ai-atlas-nexus-demos/tree/main/risk-policy-distillation) | risk policy extraction | Pipeline to generate high-level, concept-based local or global explanations for an LLM-as-a-Judge. |
 | [Auto-BenchmarkCard](https://github.com/IBM/ai-atlas-nexus-demos/tree/main/auto-benchmarkcard) | benchmark documentation, LLM, risk identification, fact-checking | Automated workflow for generating validated AI benchmark documentation with multi-agent data extraction, LLM-driven synthesis, and factuality verification.|
 | [Gaf-Guard](https://github.com/IBM/ai-atlas-nexus-demos/tree/main/gaf-guard) | risk management, AI agents, | GAF-Guard is an AI framework that can effectively detect and manage risks associated with LLMs for a given use-case.|
 | [Neo4j-Db ](https://github.com/IBM/ai-atlas-nexus-demos/tree/main/neo4j-db) |neo4j, Docker | Set up a docker container with an instance of neo4j community and import the data from AI Atlas Nexus into it. |

@@ -1,0 +1,22 @@
+# Ignore VSCode folder
+.vscode/
+.idea/
+
+# Ignore venv
+vrisk-atlas-nexus
+not for upload/
+./venv-risk-policy-distillation
+
+# Ignore Python cache
+__pycache__/
+
+.DS_Store
+
+.ipynb_checkpoints
+
+.python-version
+
+build
+
+*.egg-info/
+*.egg
