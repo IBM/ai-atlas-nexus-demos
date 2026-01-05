@@ -1,0 +1,2 @@
+gradio==5.49.1
+ai-atlas-nexus [ollama] @ git+https://github.com/ingelise/risk-atlas-nexus@iv_capability_content
