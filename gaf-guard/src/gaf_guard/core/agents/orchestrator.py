@@ -45,7 +45,8 @@ class OrchestratorAgent(Agent):
         RiskGeneratorAgent: Agent,
         HumanInTheLoopAgent: Agent,
         StreamAgent: Agent,
-        RisksAssessmentAgent: Agent,
+        # RisksAssessmentAgent: Agent,
+        DynamicRisksAssessmentAgent: Agent,
         DriftMonitoringAgent: Agent,
     ):
 
@@ -54,8 +55,11 @@ class OrchestratorAgent(Agent):
         graph.add_node(RiskGeneratorAgent._WORKFLOW_NAME, RiskGeneratorAgent.workflow)
         graph.add_node(HumanInTheLoopAgent._WORKFLOW_NAME, HumanInTheLoopAgent.workflow)
         graph.add_node(StreamAgent._WORKFLOW_NAME, StreamAgent.workflow)
+        # graph.add_node(
+        #     RisksAssessmentAgent._WORKFLOW_NAME, RisksAssessmentAgent.workflow
+        # )
         graph.add_node(
-            RisksAssessmentAgent._WORKFLOW_NAME, RisksAssessmentAgent.workflow
+            DynamicRisksAssessmentAgent._WORKFLOW_NAME, DynamicRisksAssessmentAgent.workflow
         )
         graph.add_node(
             DriftMonitoringAgent._WORKFLOW_NAME, DriftMonitoringAgent.workflow
@@ -78,13 +82,23 @@ class OrchestratorAgent(Agent):
             path=partial(next_agent, StreamAgent),
             path_map=[StreamAgent._WORKFLOW_NAME],
         )
+        # graph.add_conditional_edges(
+        #     source=StreamAgent._WORKFLOW_NAME,
+        #     path=partial(next_agent, RisksAssessmentAgent),
+        #     path_map=[RisksAssessmentAgent._WORKFLOW_NAME, END],
+        # )
         graph.add_conditional_edges(
             source=StreamAgent._WORKFLOW_NAME,
-            path=partial(next_agent, RisksAssessmentAgent),
-            path_map=[RisksAssessmentAgent._WORKFLOW_NAME, END],
+            path=partial(next_agent, DynamicRisksAssessmentAgent),
+            path_map=[DynamicRisksAssessmentAgent._WORKFLOW_NAME, END],
         )
+        # graph.add_conditional_edges(
+        #     source=RisksAssessmentAgent._WORKFLOW_NAME,
+        #     path=partial(next_agent, DriftMonitoringAgent),
+        #     path_map=[DriftMonitoringAgent._WORKFLOW_NAME],
+        # )
         graph.add_conditional_edges(
-            source=RisksAssessmentAgent._WORKFLOW_NAME,
+            source=DynamicRisksAssessmentAgent._WORKFLOW_NAME,
             path=partial(next_agent, DriftMonitoringAgent),
             path_map=[DriftMonitoringAgent._WORKFLOW_NAME],
         )

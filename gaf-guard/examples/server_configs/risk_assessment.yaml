@@ -64,7 +64,10 @@ agents:
       taxonomy: &taxonomy ibm-risk-atlas
     HumanInTheLoopAgent: {}
     StreamAgent: {}
-    RisksAssessmentAgent:
+    # RisksAssessmentAgent:
+    #   inference_engine: *rits_granite_guardian # currently only granite guardian >=3.0 models are supported.
+    #   taxonomy: *taxonomy
+    DynamicRisksAssessmentAgent:
       inference_engine: *rits_granite_guardian # currently only granite guardian >=3.0 models are supported.
       taxonomy: *taxonomy
     DriftMonitoringAgent:

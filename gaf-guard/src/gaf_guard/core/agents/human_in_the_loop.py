@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.errors import GraphInterrupt
@@ -17,10 +17,13 @@ from gaf_guard.core.models import WorkflowStepMessage
 
 console = Console()
 
+class DynamicRisk(BaseModel):
+    risk_name: str
 
 # Graph state
 class HumanInTheLoopAgentState(BaseModel):
     identified_risks: Optional[List[str]] = None
+    dynamic_identified_risks: Optional[List[DynamicRisk]] = None
 
 
 # Node
@@ -51,19 +54,21 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
         try:
             if len(updated_risks["response"]) > 0:
                 updated_risks = json.loads(updated_risks["response"])
+                dynamic_updated_risks = json.loads('[{"risk_name":"Toxic output"}]')
             else:
                 updated_risks = state.identified_risks
+                dynamic_updated_risks = json.loads('[{"risk_name":"Toxic output"}]')
             break
         except:
             syntax_error = True
 
-    return {"identified_risks": updated_risks}
+    return {"identified_risks": updated_risks, "dynamic_identified_risks": dynamic_updated_risks}
 
 
 # Node
 @workflow_step(step_name="Updated AI Risks from Human Response", step_role=Role.USER)
 def updated_ai_risks(state: HumanInTheLoopAgentState, config: RunnableConfig):
-    return {"identified_risks": state.identified_risks}
+    return {"identified_risks": state.identified_risks, "dynamic_identified_risks": state.dynamic_identified_risks}
 
 
 class HumanInTheLoopAgent(Agent):
