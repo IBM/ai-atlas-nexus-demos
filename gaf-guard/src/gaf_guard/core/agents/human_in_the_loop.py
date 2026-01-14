@@ -1,5 +1,5 @@
 import json
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Annotated, Any
 
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.errors import GraphInterrupt
@@ -13,17 +13,17 @@ from gaf_guard.core.decorators import workflow_step
 from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.exceptions import HumanInterruptionException
 from gaf_guard.core.models import WorkflowStepMessage
-
+import operator
 
 console = Console()
 
-class DynamicRisk(BaseModel):
-    risk_name: str
+# class DynamicRisk(BaseModel):
+#     risk_name: str
 
 # Graph state
 class HumanInTheLoopAgentState(BaseModel):
     identified_risks: Optional[List[str]] = None
-    dynamic_identified_risks: Optional[List[DynamicRisk]] = None
+    dynamic_identified_risks: Optional[List[Dict[str, Any]]] = None
 
 
 # Node
@@ -37,12 +37,12 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
     syntax_error = False
     while True:
         try:
-            updated_risks = interrupt(
+            dynamic_updated_risks = interrupt(
                 WorkflowStepMessage(
                     step_type=MessageType.HITL_QUERY,
                     content=(
                         ("\nSyntax Error, Try Again." if syntax_error else "")
-                        + f"\nPlease Accept (Press Enter) or Suggest edits for AI Risks (Type your answer as a python List)"
+                        + f"\nPlease Accept (Press Enter) or Suggest edits for AI Risks (Type your answer as a python List of dictionaries with keys risk_name, priority, threshold)"
                     ),
                     step_name="Human Intervention",
                     step_role=Role.SYSTEM,
@@ -52,12 +52,12 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
             raise HumanInterruptionException(json.dumps(e.args[0][0].value))
 
         try:
-            if len(updated_risks["response"]) > 0:
-                updated_risks = json.loads(updated_risks["response"])
-                dynamic_updated_risks = json.loads('[{"risk_name":"Toxic output"}]')
+            if len(dynamic_updated_risks["response"]) > 0:
+                updated_risks = state.identified_risks # json.loads(updated_risks["response"])
+                dynamic_updated_risks = json.loads(dynamic_updated_risks)
             else:
                 updated_risks = state.identified_risks
-                dynamic_updated_risks = json.loads('[{"risk_name":"Toxic output"}]')
+                dynamic_updated_risks = json.loads('[{"risk_name":"Toxic output", "priority": "low", "threshold": 0.2}, {"risk_name":"Hallucination", "priority": "high", "threshold": 0.01}]')
             break
         except:
             syntax_error = True
