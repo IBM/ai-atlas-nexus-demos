@@ -61,14 +61,14 @@ CALL db.schema.visualization()
 
 Create an index to search, in this case let's just use the risk titles
 ```
-CREATE FULLTEXT INDEX riskNameIndex FOR (r:Risk) ON EACH [r.name]
+CREATE FULLTEXT INDEX riskNameIndex FOR (r:Risk) ON EACH [r.name] ;
 ```
 
 Do a search:
 ```
 CALL db.index.fulltext.queryNodes("riskNameIndex", "name:violence") 
 YIELD node, score
-RETURN node.name as name, score
+RETURN node.name as name, score ; 
 ```
 ```
 ╒════════════════════════════════════════════════════════╤══════════════════╕
