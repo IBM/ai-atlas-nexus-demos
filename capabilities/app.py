@@ -5,12 +5,17 @@ A local Gradio interface for exploring AI capabilities:
 Natural Language Intent → AI Tasks → Capabilities → Recommended Intrinsics
 """
 
+import os
 import gradio as gr
 import sys
 import base64
 
 from ai_atlas_nexus import AIAtlasNexus
-from ai_atlas_nexus.blocks.inference import OllamaInferenceEngine
+
+from ai_atlas_nexus.blocks.inference import WMLInferenceEngine
+from ai_atlas_nexus.blocks.inference.params import WMLInferenceEngineParams
+
+#from ai_atlas_nexus.blocks.inference import OllamaInferenceEngine
 
 
 def load_logo_as_base64(logo_path):
@@ -39,10 +44,23 @@ class CapabilitiesNavigator:
     def configure_inference(self, model_name="granite3.3:8b", api_url="http://localhost:11434"):
         """Configure Ollama inference engine"""
         try:
+            """
             self.inference_engine = OllamaInferenceEngine(
                 model_name_or_path=model_name,
                 credentials={"api_url": api_url},
                 parameters={"temperature": 0.1, "num_predict": 500}
+            )
+            """
+            self.inference_engine = WMLInferenceEngine(
+                model_name_or_path=model_name,
+                credentials={
+                    "api_key": os.environ["WML_API_KEY"],
+                    "api_url": os.environ["WML_API_URL"],
+                    "project_id": os.environ["WML_PROJECT_ID"],
+                },
+                parameters=WMLInferenceEngineParams(
+                    max_new_tokens=500, decoding_method="greedy", repetition_penalty=1
+                ),  # type: ignore
             )
             return f"✓ Inference engine configured: {model_name}"
         except Exception as e:
@@ -287,15 +305,18 @@ def create_ui():
             with gr.Accordion("⚙️ Inference Configuration", open=False):
                 with gr.Row():
                     model_input = gr.Textbox(
-                        label="Ollama Model",
-                        value="granite3.3:8b",
+                        label="Model",
+                        #value="granite3.3:8b",
+                        value="ibm/granite-3-3-8b-instruct",
                         scale=2
                     )
+                    """
                     api_url_input = gr.Textbox(
                         label="API URL",
                         value="http://localhost:11434",
                         scale=2
                     )
+                    """
 
                 config_btn = gr.Button("Configure Inference Engine", variant="secondary", size="sm")
                 config_status = gr.Textbox(label="Status", interactive=False, lines=1)
@@ -337,7 +358,8 @@ def create_ui():
             # Wire up buttons
             config_btn.click(
                 fn=navigator.configure_inference,
-                inputs=[model_input, api_url_input],
+                inputs=[model_input, #api_url_input
+                        ],
                 outputs=config_status
             )
 
@@ -388,7 +410,8 @@ def create_ui():
             # Run inference on button click
             analyze_btn.click(
                 fn=handle_inference_with_loading,
-                inputs=[intent_input, model_input, api_url_input],
+                inputs=[intent_input, model_input, #api_url_input
+                        ],
                 outputs=[loading_msg, task_selector, task_section, cascade_group]
             )
 
@@ -532,9 +555,9 @@ def create_ui():
             - **Mathematical**: Mathematical and quantitative reasoning
 
             ### Requirements:
-
-            - **Ollama** running locally with a model installed (e.g., granite3.2:8b)
-            - **ai-atlas-nexus** Python package
+            - *ai-atlas-nexus* Python package 
+            - [Configure the inference](https://github.com/IBM/ai-atlas-nexus?tab=readme-ov-file#install-for-inference-apis), for example WML, RITS, Ollama, VLLM.
+            
 
             ### Source:
 
