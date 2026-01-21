@@ -697,6 +697,14 @@ def run_composer(state: GraphState):
 
         logger.info("Successfully composed benchmark card")
 
+        # Save provenance separately to tool_output/composer/
+        if result.get("provenance"):
+            provenance_filename = f"provenance_{sanitize_benchmark_name(state['query'])}.json"
+            provenance_output = state["output_manager"].save_tool_output(
+                result["provenance"], "composer", provenance_filename
+            )
+            logger.info(f"Provenance tracking saved to: {provenance_output}")
+
         # Show snippet
         benchmark_card = result.get("benchmark_card", {})
         details = benchmark_card.get("benchmark_details", {})

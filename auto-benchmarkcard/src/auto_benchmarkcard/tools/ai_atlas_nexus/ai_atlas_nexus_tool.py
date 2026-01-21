@@ -94,7 +94,7 @@ def create_inference_engine():
         # Create handler with RITS engine for risk identification
         handler = LLMHandler(
             engine_type="rits",
-            model_name="ibm/granite-20b-code-instruct",
+            model_name="meta-llama/llama-3-3-70b-instruct",
             credentials={
                 "api_key": os.getenv("RITS_API_KEY"),
                 "api_url": os.getenv("RITS_API_URL"),
