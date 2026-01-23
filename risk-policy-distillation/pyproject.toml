@@ -39,7 +39,6 @@ dependencies = [
     "openai",
     "dotenv",
     "lime",
-    "shap",
     "fairlearn",
     "numpy",
     "pandas",
