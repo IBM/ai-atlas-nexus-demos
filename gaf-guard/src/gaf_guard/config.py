@@ -18,10 +18,6 @@ class Configuration(BaseSettings):
     GAF_GUARD_HOST: str = "localhost"
     GAF_GUARD_PORT: int = 8000
     OLLAMA_API_URL: HttpUrl = HttpUrl("http://localhost:11434")
-    RITS_API_KEY: str = "cbc683b3a1a7c52d2a73008b785d2811"
-    RITS_API_URL: str = (
-        "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com"
-    )
 
 
 @lru_cache

@@ -27,10 +27,11 @@ from langgraph.types import Command
 from rich import print as rprint
 from rich.console import Console
 from rich.panel import Panel
-from gaf_guard.core.decorators import workflow_step
+
 import gaf_guard
 from gaf_guard.config import get_configuration
 from gaf_guard.core.agent_builder import AgentBuilder
+from gaf_guard.core.decorators import workflow_step
 from gaf_guard.core.models import WorkflowStepMessage
 from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.exceptions import HumanInterruptionException
@@ -51,11 +52,11 @@ GAF_GUARD_AGENTS = {}
 CLIENT_CONFIGS = {}
 
 
-# @app.callback()
-# def main() -> None:
-#     """
-#     GAF Guard Server
-#     """
+@app.callback()
+def main() -> None:
+    """
+    GAF Guard Server
+    """
 
 
 @server.agent(
@@ -134,17 +135,16 @@ async def orchestrator(
                         ],
                     )
                 elif dest_type == "logger":
-                    # await GAF_GUARD_AGENTS["TrialLoggerAgent"].workflow.ainvoke(
-                    #     input=message.model_dump(),
-                    #     config={
-                    #         "configurable": {
-                    #             "thread_id": 1,
-                    #             "trial_name": config["trial_name"],
-                    #         }
-                    #         | RUN_CONFIGS
-                    #     },
-                    # )
-                    ...
+                    await GAF_GUARD_AGENTS["TrialLoggerAgent"].workflow.ainvoke(
+                        input=message.model_dump(),
+                        config={
+                            "configurable": {
+                                "thread_id": 1,
+                                "trial_name": config["trial_name"],
+                            }
+                            | RUN_CONFIGS
+                        },
+                    )
 
     except HumanInterruptionException as e:
         yield MessageAwaitRequest(
@@ -219,5 +219,5 @@ def serve(config_file):
     )
 
 
-if __name__ == "__main__":
-    app()
+# if __name__ == "__main__":
+#     app()
