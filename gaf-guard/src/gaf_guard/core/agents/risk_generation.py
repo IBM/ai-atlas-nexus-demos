@@ -1,5 +1,5 @@
 from functools import partial
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Annotated, Any
 
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
@@ -11,11 +11,13 @@ from ai_atlas_nexus.library import AIAtlasNexus
 
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
-
+import operator
 
 console = Console()
 ai_atlas_nexus = AIAtlasNexus()
 
+# class DynamicRisk(BaseModel):
+#     risk_name: str
 
 # Graph state
 class RiskGenerationState(BaseModel):
@@ -25,6 +27,7 @@ class RiskGenerationState(BaseModel):
     risk_questionnaire_output: Optional[List[Dict[str, str]]] = None
     identified_risks: Optional[List[str]] = None
     identified_ai_tasks: Optional[List[str]] = None
+    dynamic_identified_risks: Optional[List[Dict[str, Any]]] = None
 
 
 # Node

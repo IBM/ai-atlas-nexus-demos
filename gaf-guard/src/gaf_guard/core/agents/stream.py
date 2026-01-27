@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict
 
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.errors import GraphInterrupt
@@ -13,22 +13,25 @@ from gaf_guard.core.decorators import workflow_step
 from gaf_guard.core.models import WorkflowStepMessage
 from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.exceptions import HumanInterruptionException
-
+import random
 
 PROMPT_GEN = {}
-
+RANDOM_INDICES = []
 
 # Graph state
 class StreamAgentState(BaseModel):
     prompt: Optional[str] = None
     prompt_index: Optional[int] = None
-
+    random_indices: Optional[List[int]] = [0]
+   
 
 # Node
 def next_prompt(state: StreamAgentState, config: RunnableConfig):
     try:
         client_id = config.get("configurable", {}).get("thread_id", "Client_1")
         index, prompt = next(PROMPT_GEN.get(client_id, iter([])))
+        RANDOM_INDICES = [1,2,7,9] # sorted(random.sample(range(10),4))
+        # return {"prompt_index": index, "prompt": prompt, "random_indices": RANDOM_INDICES}
         return {"prompt_index": index, "prompt": prompt}
     except StopIteration:
         return {"prompt_index": None, "prompt": None}
@@ -89,12 +92,20 @@ def load_input_prompts(state: StreamAgentState, config: RunnableConfig):
     PROMPT_GEN[config.get("configurable", {}).get("thread_id", "Client_1")] = (
         (index, prompt) for index, prompt in enumerate(prompts, start=1)
     )
+    # global RANDOM_INDICES
+    # RANDOM_INDICES = random.choices(range(10), k=4)
 
 
 # Node
 @workflow_step(step_name="Input Prompt", step_role=Role.USER)
 def stream_input_prompt(state: StreamAgentState, config: RunnableConfig):
-    return {"prompt_index": state.prompt_index, "prompt": state.prompt}
+    if state.prompt_index == 1:
+        RANDOM_INDICES = [1,3,7,9] # sorted(random.sample(range(10),4))
+        # RISK_METRICS = {}
+    else:
+        RANDOM_INDICES = [1,2,7,9] # state.random_indices
+        # RISK_METRICS = state.risk_metrics
+    return {"prompt_index": state.prompt_index, "prompt": state.prompt, "random_indices": RANDOM_INDICES}
 
 
 class StreamAgent(Agent):

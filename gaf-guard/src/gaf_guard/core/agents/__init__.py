@@ -8,3 +8,4 @@ from gaf_guard.core.agents.risk_generation import RiskGeneratorAgent
 from gaf_guard.core.agents.stream import StreamAgent
 from gaf_guard.core.agents.trial_logger import TrialLoggerAgent
 from gaf_guard.core.agents.dynamic_risk_assessment import DynamicRisksAssessmentAgent
+from gaf_guard.core.agents.guardrails import GuardrailsAgent

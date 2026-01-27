@@ -70,6 +70,9 @@ agents:
     DynamicRisksAssessmentAgent:
       inference_engine: *rits_granite_guardian # currently only granite guardian >=3.0 models are supported.
       taxonomy: *taxonomy
+    GuardrailsAgent:
+      inference_engine: *ollama_llama # currently only granite guardian >=3.0 models are supported.
+      taxonomy: *taxonomy
     DriftMonitoringAgent:
       inference_engine: *ollama_llama
 

@@ -1,6 +1,6 @@
 import re
 from functools import partial
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Annotated, Any
 
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
@@ -11,7 +11,7 @@ from ai_atlas_nexus.library import AIAtlasNexus
 from ai_atlas_nexus.ai_risk_ontology.datamodel.ai_risk_ontology import Risk
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
-
+import operator
 
 console = Console()
 ai_atlas_nexus = AIAtlasNexus()
@@ -21,11 +21,15 @@ def parse_model_assessment(response):
     assessment_match = re.findall(r"<score>(.*?)</score>", response, re.DOTALL)
     return assessment_match[-1].strip().title() if assessment_match else None
 
+# class DynamicRisk(BaseModel):
+#     risk_name: str
 
 # Graph state
 class RiskAssessmentState(BaseModel):
     prompt: str
     identified_risks: List[str]
+    # dynamic_identified_risks: List[DynamicRisk]
+    dynamic_identified_risks: Annotated[List[Dict[str, Any]], operator.add]
     risk_report: Optional[Dict] = None
 
 

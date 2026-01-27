@@ -83,6 +83,7 @@ def drift_incident_reporting(state: DriftMonitoringState, config: RunnableConfig
 
     if state.drift_value > drift_threshold:
         incident_message = f"Potential drift in prompts identified."
+        
     else:
         incident_message = f"No drift detected."
 
