@@ -5,7 +5,6 @@ from typing import Annotated, Any, Dict, List, Optional
 
 from ai_atlas_nexus.ai_risk_ontology.datamodel.ai_risk_ontology import Risk
 from ai_atlas_nexus.blocks.inference import InferenceEngine
-from ai_atlas_nexus.library import AIAtlasNexus
 from deepeval.models import OllamaModel
 from deepteam.guardrails.guards.hallucination_guard import HallucinationGuard
 from deepteam.guardrails.guards.toxicity_guard import ToxicityGuard
@@ -14,12 +13,12 @@ from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 from rich.console import Console
 
+from gaf_guard.core import ai_atlas_nexus
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
 
 
 console = Console()
-ai_atlas_nexus = AIAtlasNexus()
 
 
 def parse_model_assessment(response):

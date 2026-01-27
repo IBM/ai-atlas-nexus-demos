@@ -4,3 +4,5 @@ GAF Guard: An Agentic AI framework that can effectively detect and manage risks 
 
 # Semantic Version
 __version__ = "0.1.0"
+
+

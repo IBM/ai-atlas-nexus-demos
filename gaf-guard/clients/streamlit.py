@@ -1,33 +1,42 @@
 import asyncio
-
-#!/usr/bin/env python
+import json
 import os
-import socket
 import time
 from datetime import datetime
+from typing import Annotated, Dict, List
 
 import streamlit as st
+import typer
 from acp_sdk.client import Client
 from acp_sdk.models import Message, MessagePart
 from rich.console import Console
 
+from gaf_guard.core.models import WorkflowStepMessage
+from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.file_utils import resolve_file_paths
 
 
-os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
-import asyncio
-import json
-import os
-import signal
-from typing import Annotated, Dict, List
+# Declare global session variables
+st.session_state.priority = ["low", "medium", "high"]
+st.set_page_config(
+    page_title="GAF Guard - A real-time monitoring system for risk assessment and drift monitoring.",
+    layout="wide",  # This sets the app to wide mode
+    # initial_sidebar_state="expanded",
+)
+console = Console(log_time=True)
+app = typer.Typer()
+run_configs = {
+    "RiskGeneratorAgent": {
+        "risk_questionnaire_cot": "examples/data/chain_of_thought/risk_questionnaire.json",
+        "risk_generation_cot": "examples/data/chain_of_thought/risk_generation.json",
+    },
+    "DriftMonitoringAgent": {
+        "drift_monitoring_cot": "examples/data/chain_of_thought/drift_monitoring.json"
+    },
+}
+resolve_file_paths(run_configs)
 
-import typer
 
-from gaf_guard.core.models import WorkflowStepMessage
-from gaf_guard.toolkit.enums import MessageType, Role
-
-
-priority = ["low", "medium", "high"]
 # Apply CSS to hide chat_input when app is running (processing)
 st.markdown(
     """
@@ -55,76 +64,20 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
-footer_html = """
-<style>
-/* Styles for the footer container */
-.footer {
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    background-color: black; /* Light gray background */
-    color: white; /* Dark text */
-    text-align: center;
-    padding: 10px 0;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1); /* Subtle shadow */
-    font-size: 0.9em;
-}
 
-/* Style for links within the footer */
-.footer a {
-    color: #007bff; /* Blue links */
-    text-decoration: none;
-}
 
-.footer a:hover {
-    text-decoration: underline;
-}
+def reconnect(input_host, input_port):
+    # Iterate over all keys and delete them
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
 
-</style>
+    st.session_state.host = input_host
+    st.session_state.port = input_port
+    st.rerun()
 
-<div class="footer">
-    <p>
-        Developed with ❤️ by <a href="https://streamlit.io/" target="_blank">Streamlit</a> |
-        <a href="https://your-website.com" target="_blank">Your Company</a> |
-        &copy; 2026 Your Organization
-    </p>
-</div>
-"""
-with st.sidebar:
-    st.sidebar.title("Settings")
-    option = st.selectbox(
-        "Risk Taxonomy",
-        ("IBM Risk Atlas"),
-    )
-    number = st.number_input("Drift Threshold", value=8)
-    st.button("Apply", type="primary")
 
-    st.divider()
-    text_input = st.text_input("GAF Guard Host", value="localhost")
-    number = st.number_input("GAF Guard Port", value=8000)
-    st.button("Reconnect", type="primary")
-
-    st.divider()
-    st.markdown(":blue[Powered by:]")
-    st.link_button(
-        "AI Atlas Nexus",
-        "https://github.com/IBM/ai-atlas-nexus",
-        icon=":material/thumb_up:",
-        type="secondary",
-    )
-
-st.set_page_config(
-    page_title="GAF Guard - A real-time monitoring system for risk assessment and drift monitoring.",
-    layout="wide",  # This sets the app to wide mode
-    # initial_sidebar_state="expanded",
-)
-# def signal_handler(sig, frame):
-#     print("Exiting...")
-#     for task in asyncio.tasks.all_tasks():
-#         task.cancel()
-#     sys.exit(0)
-console = Console(log_time=True)
+def set_drift_threshold(input_drift_threshold):
+    st.session_state.drift_threshold = input_drift_threshold
 
 
 def pprint(key, value):
@@ -134,23 +87,6 @@ def pprint(key, value):
         return f"[red]{value}[/red]"
     else:
         return value
-
-
-# signal.signal(signal.SIGINT, signal_handler)
-
-app = typer.Typer()
-
-run_configs = {
-    "RiskGeneratorAgent": {
-        "risk_questionnaire_cot": "examples/data/chain_of_thought/risk_questionnaire.json",
-        "risk_generation_cot": "examples/data/chain_of_thought/risk_generation.json",
-    },
-    "DriftMonitoringAgent": {
-        "drift_threshold": 8,
-        "drift_monitoring_cot": "examples/data/chain_of_thought/drift_monitoring.json",
-    },
-}
-resolve_file_paths(run_configs)
 
 
 def print_server_msg():
@@ -188,16 +124,6 @@ def simulate_agent_response(role, message, json_data=None, simulate=False):
             st.markdown(message)
 
         if json_data:
-            # if simulate:
-            #     message_placeholder = st.empty()
-            #     full_response = ""
-            #     for chunk in json.dumps(json_data, indent=2).split():
-            #         full_response += chunk + " "
-            #         time.sleep(0.10)
-            #         message_placeholder.markdown(full_response + "▌")
-            #     message_placeholder.markdown(full_response)
-            # else:
-            #     st.markdown(json.dumps(json_data, indent=2))
             st.json(json_data, expanded=4)
 
 
@@ -322,9 +248,9 @@ def vote():
             with col2:
                 value = st.selectbox(
                     "Priority" if key == "0" else " ",
-                    tuple(priority),
+                    tuple(st.session_state.priority),
                     key=f"col2{key}",
-                    index=priority.index(dynamic_risk["priority"]),
+                    index=st.session_state.priority.index(dynamic_risk["priority"]),
                 )
                 st.session_state.dynamic_risks[key].update({"priority": value})
             with col3:
@@ -344,25 +270,56 @@ def vote():
         st.rerun()
 
 
-async def run_app(host, port):
+with st.sidebar:
+    st.sidebar.title("Settings")
+    option = st.selectbox(
+        "Risk Taxonomy",
+        ("IBM Risk Atlas"),
+    )
+    input_drift_threshold = st.number_input("Drift Threshold", value=8)
+    st.button(
+        "Apply",
+        type="primary",
+        on_click=set_drift_threshold,
+        args=(input_drift_threshold,),
+    )
+
+    st.divider()
+    input_host = st.text_input("GAF Guard Host", value="localhost")
+    input_port = st.number_input("GAF Guard Port", value=8000)
+    st.button(
+        "Reconnect",
+        type="primary",
+        on_click=reconnect,
+        args=(input_host, input_port),
+    )
+
+    st.divider()
+    st.markdown(":blue[Powered by:]")
+    st.link_button(
+        "AI Atlas Nexus",
+        "https://github.com/IBM/ai-atlas-nexus",
+        icon=":material/thumb_up:",
+        type="secondary",
+    )
+
+
+async def run_app():
 
     if "client_session" not in st.session_state:
-        st.session_state.host = host
-        st.session_state.port = port
-        client = Client(base_url=f"http://{host}:{port}")
+        client = Client(
+            base_url=f"http://{st.session_state.host}:{st.session_state.port}"
+        )
         st.session_state.client_session = client.session()
         st.session_state.input_message_type = MessageType.WORKFLOW_INPUT
         st.session_state.input_message_query = "Enter user intent here"
+        st.session_state.response_type_needed = "None"
         st.session_state.input_message_key = "user_intent"
         st.session_state.disabled_input = False
-        st.session_state.messages = [
-            # WorkflowStepMessage(
-            #     step_type=MessageType.WORKFLOW_INPUT,
-            #     step_name="Landing",
-            #     step_role="system",
-            #     content="New Session 👇",
-            # )
-        ]
+        st.session_state.drift_threshold = 8
+        st.session_state.messages = []
+
+    run_configs["drift_threshold"] = st.session_state.drift_threshold
 
     print_server_msg()
     st.title(
@@ -380,17 +337,18 @@ async def run_app(host, port):
         render(message)
 
     async with st.session_state.client_session:
+
         # Accept user input
-        if st.session_state.input_message_key == "response":
+        if st.session_state.response_type_needed == "dynamic_risks":
             st.button("Add Dynamic Risks", on_click=vote)
         user_input = st.chat_input(
             st.session_state["input_message_query"], key="user_input"
         )
+
         if not user_input:
             st.stop()
 
-        if st.session_state.input_message_type == MessageType.WORKFLOW_INPUT:
-            user_input = "llms for medical chatbot."
+        # progress = st.status(label="Loading data!")
         COMPLETED = False
         while True:
             async for event in st.session_state.client_session.run_stream(
@@ -401,12 +359,10 @@ async def run_app(host, port):
                             MessagePart(
                                 content=WorkflowStepMessage(
                                     step_name="GAF Guard Client",
-                                    step_type=st.session_state["input_message_type"],
+                                    step_type=st.session_state.input_message_type,
                                     step_role=Role.USER,
                                     content={
-                                        st.session_state[
-                                            "input_message_key"
-                                        ]: user_input
+                                        st.session_state.input_message_key: user_input
                                     },
                                     run_configs=run_configs,
                                 ).model_dump_json(),
@@ -416,10 +372,14 @@ async def run_app(host, port):
                     )
                 ],
             ):
+                # progress.update(
+                #     label="Download complete!", state="complete", expanded=False
+                # )
                 if event.type == "message.part":
                     message = WorkflowStepMessage(**json.loads(event.part.content))
                     if render(message, simulate=True):
                         st.session_state.messages.append(message)
+                    # progress.update(label="Loading data!", state="running")
                 elif event.type == "run.awaiting":
                     if hasattr(event, "run"):
                         message = WorkflowStepMessage(
@@ -429,13 +389,14 @@ async def run_app(host, port):
                         )
                         st.session_state.messages.append(message)
                         render(message, simulate=True)
-                        st.session_state["input_message_type"] = (
-                            MessageType.HITL_RESPONSE
-                        )
-                        st.session_state["input_message_key"] = "response"
-                        st.session_state["input_message_query"] = (
-                            "Enter your response here"
-                        )
+                        st.session_state.input_message_type = MessageType.HITL_RESPONSE
+                        st.session_state.input_message_key = "response"
+                        st.session_state.input_message_query = message.step_kwargs[
+                            "input_message_query"
+                        ]
+                        st.session_state.response_type_needed = message.step_kwargs[
+                            "response_type_needed"
+                        ]
                         st.rerun()
                         # COMPLETED = True
 
@@ -464,7 +425,9 @@ def main(
     ] = 8000,
 ):
     os.system("clear")
-    asyncio.run(run_app(host=host, port=port))
+    st.session_state.host = host
+    st.session_state.port = port
+    asyncio.run(run_app())
 
 
 if __name__ == "__main__":

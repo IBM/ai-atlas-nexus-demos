@@ -62,10 +62,8 @@ def load_input_prompts(state: StreamAgentState, config: RunnableConfig):
                     step_name="Stream Prompt",
                     step_role=Role.SYSTEM,
                     step_kwargs={
-                        "choices": [
-                            "1",
-                            "2",
-                        ]
+                        "input_message_query": "Enter prompt type (1 or 2)",
+                        "response_type_needed": "prompt_input",
                     },
                 ).model_dump()
             )
@@ -81,6 +79,10 @@ def load_input_prompts(state: StreamAgentState, config: RunnableConfig):
                             content="\nEnter your prompt",
                             step_name="Stream Prompt",
                             step_role=Role.SYSTEM,
+                            step_kwargs={
+                                "input_message_query": "Enter prompt text here",
+                                "response_type_needed": "prompt_input",
+                            },
                         ).model_dump()
                     )["response"]
                 ]
@@ -92,6 +94,10 @@ def load_input_prompts(state: StreamAgentState, config: RunnableConfig):
                         content="\nEnter JSON file path",
                         step_name="Stream Prompt",
                         step_role=Role.SYSTEM,
+                        step_kwargs={
+                            "input_message_query": "Enter prompt file path here",
+                            "response_type_needed": "prompt_input",
+                        },
                     ).model_dump()
                 )
                 prompts = json.load(Path(prompt_file["response"]).open("r"))

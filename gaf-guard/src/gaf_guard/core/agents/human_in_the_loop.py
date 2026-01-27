@@ -44,10 +44,14 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
                     step_type=MessageType.HITL_QUERY,
                     content=(
                         ("\nSyntax Error, Try Again." if syntax_error else "")
-                        + f"\nPlease Accept (Press Enter) or Suggest edits for AI Risks (Type your answer as a python List of dictionaries with keys risk_name, priority, threshold)"
+                        + f"\nPlease add Risks using 'Add Dynamic Risks' button or Type Risks as a python List of dictionaries with keys risk_name, priority, threshold."
                     ),
                     step_name="Human Intervention",
                     step_role=Role.AGENT,
+                    step_kwargs={
+                        "input_message_query": "Enter dynamic risks here",
+                        "response_type_needed": "dynamic_risks",
+                    },
                 ).model_dump()
             )
         except GraphInterrupt as e:
@@ -55,12 +59,8 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
 
         try:
             if len(dynamic_updated_risks["response"]) > 0:
-                updated_risks = (
-                    state.identified_risks
-                )  # json.loads(updated_risks["response"])
                 dynamic_updated_risks = json.loads(dynamic_updated_risks["response"])
             else:
-                updated_risks = state.identified_risks
                 dynamic_updated_risks = json.loads(
                     '[{"risk_name":"Toxic output", "priority": "low", "threshold": 0.2}, {"risk_name":"Hallucination", "priority": "high", "threshold": 0.01}]'
                 )
@@ -68,19 +68,13 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
         except Exception as e:
             syntax_error = True
 
-    return {
-        "identified_risks": updated_risks,
-        "dynamic_identified_risks": dynamic_updated_risks,
-    }
+    return {"dynamic_identified_risks": dynamic_updated_risks}
 
 
 # Node
 @workflow_step(step_name="Updated AI Risks from Human Response", step_role=Role.USER)
 def updated_ai_risks(state: HumanInTheLoopAgentState, config: RunnableConfig):
-    return {
-        "identified_risks": state.identified_risks,
-        "dynamic_identified_risks": state.dynamic_identified_risks,
-    }
+    return {"dynamic_identified_risks": state.dynamic_identified_risks}
 
 
 class HumanInTheLoopAgent(Agent):

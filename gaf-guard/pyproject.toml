@@ -41,7 +41,9 @@ dependencies = [
     "prettytable",
     "isort",
     "pre-commit",
-    "uvicorn==0.35.0"
+    "uvicorn==0.35.0",
+    "streamlit",
+    "deepteam"
 ]
 
 [project.optional-dependencies]
