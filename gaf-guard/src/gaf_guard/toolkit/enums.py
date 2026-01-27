@@ -21,9 +21,9 @@ class MessageType(CustomStrEnum):
 
 
 class Role(StrEnum):
-    USER = auto()
-    AGENT = auto()
-    SYSTEM = auto()
+    USER = "user"
+    AGENT = "assistant"
+    SYSTEM = "system"
 
 
 class Serializer(Enum):

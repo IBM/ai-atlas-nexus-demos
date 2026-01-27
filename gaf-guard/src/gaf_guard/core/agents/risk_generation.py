@@ -1,13 +1,13 @@
 from functools import partial
 from typing import Dict, List, Optional
 
+from ai_atlas_nexus.blocks.inference import InferenceEngine
+from ai_atlas_nexus.data import load_resource
+from ai_atlas_nexus.library import AIAtlasNexus
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 from rich.console import Console
-from ai_atlas_nexus.blocks.inference import InferenceEngine
-from ai_atlas_nexus.data import load_resource
-from ai_atlas_nexus.library import AIAtlasNexus
 
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
@@ -34,11 +34,11 @@ def get_usecase_domain(
     state: RiskGenerationState,
     config: RunnableConfig,
 ):
-    domain = ai_atlas_nexus.identify_domain_from_usecases(
-        [state.user_intent], inference_engine, verbose=False
-    )[0]
+    # domain = ai_atlas_nexus.identify_domain_from_usecases(
+    #     [state.user_intent], inference_engine, verbose=False
+    # )[0]
 
-    return {"domain": domain.prediction["answer"]}
+    return {"domain": "Writing assistant"}
 
 
 # Node
@@ -85,31 +85,56 @@ def generate_few_shot(
     config: RunnableConfig,
 ):
     # load CoT data
-    risk_questionnaire_cot = (
-        config.get("configurable", {})
-        .get("RiskGeneratorAgent", {})
-        .get("risk_questionnaire_cot", load_resource("risk_questionnaire_cot.json"))
-    )
+    # risk_questionnaire_cot = (
+    #     config.get("configurable", {})
+    #     .get("RiskGeneratorAgent", {})
+    #     .get("risk_questionnaire_cot", load_resource("risk_questionnaire_cot.json"))
+    # )
 
-    responses = ai_atlas_nexus.generate_few_shot_risk_questionnaire_output(
-        state.user_intent,
-        risk_questionnaire_cot[1:],
-        inference_engine,
-        verbose=False,
-    )
+    # responses = ai_atlas_nexus.generate_few_shot_risk_questionnaire_output(
+    #     state.user_intent,
+    #     risk_questionnaire_cot[1:],
+    #     inference_engine,
+    #     verbose=False,
+    # )
 
-    risk_questionnaire_output = []
-    for question_data, response in zip(risk_questionnaire_cot[1:], responses):
-        risk_questionnaire_output.append(
-            {
-                "question": question_data["question"],
-                "answer": response.prediction["answer"],
-            }
-        )
+    # risk_questionnaire_output = []
+    # for question_data, response in zip(risk_questionnaire_cot[1:], responses):
+    #     risk_questionnaire_output.append(
+    #         {
+    #             "question": question_data["question"],
+    #             "answer": response.prediction["answer"],
+    #         }
+    #     )
 
     return {
-        "risk_questionnaire_output": risk_questionnaire_output,
-        "environment": responses[0].prediction["answer"],
+        "risk_questionnaire_output": [
+            {
+                "question": "In which environment is the system used?",
+                "answer": "Legal and Policy Research Departments or Government Policy Units",
+            },
+            {
+                "question": "What techniques are utilised in the system? Multi-modal: {Document Question/Answering, Image and text to text, Video and text to text, visual question answering}, Natural language processing: {feature extraction, fill mask, question answering, sentence similarity, summarization, table question answering, text classification, text generation, token classification, translation, zero shot classification}, computer vision: {image classification, image segmentation, text to image, object detection}, audio:{audio classification, audio to audio, text to speech}, tabular: {tabular classification, tabular regression}, reinforcement learning",
+                "answer": "Natural language processing: question answering, summarization, and text generation",
+            },
+            {
+                "question": "Who is the intended user of the system?",
+                "answer": "The intended user of the system is the government policymakers or legal experts in Ireland responsible for drafting or understanding reports on automated decision-making in the welfare system.",
+            },
+            {
+                "question": "What is the intended purpose of the system?",
+                "answer": "To generate a comprehensive government policy report on automated decision-making in Ireland's welfare system, with a specific focus on analyzing how federal courts have addressed automated penalties. The system aims to ensure the report is factually correct and provides a thorough examination of the input documents.",
+            },
+            {
+                "question": "What is the application of the system?",
+                "answer": "Natural Language Processing (NLP): Analyze legal documents, court rulings, and policy papers to extract relevant information on automated penalties in Ireland's welfare system. Machine Learning (ML): Identify patterns and trends in the data to provide insights and support evidence-based policy recommendations. Knowledge Graph: Create a structured knowledge base of legal precedents, policy documents, and stakeholder perspectives to ensure a comprehensive understanding of the topic. Fact-checking and validation: Implement AI-driven fact-checking tools to ensure the accuracy and reliability of the information presented in the report.",
+            },
+            {
+                "question": "Who is the subject as per the intent?",
+                "answer": "Ireland's welfare system and federal courts' decisions on automated penalties",
+            },
+        ],
+        "environment": "Legal and Policy Research Departments or Government Policy Units",
     }
 
 
@@ -144,11 +169,21 @@ def identify_risks(
     state: RiskGenerationState,
     config: RunnableConfig,
 ):
-    risks = ai_atlas_nexus.identify_risks_from_usecases(
-        [state.user_intent], inference_engine, taxonomy=taxonomy, zero_shot_only=True
-    )
+    # risks = ai_atlas_nexus.identify_risks_from_usecases(
+    #     [state.user_intent], inference_engine, taxonomy=taxonomy, zero_shot_only=True
+    # )
 
-    return {"identified_risks": [risk.name for risk in risks[0]]}
+    return {
+        "identified_risks": [
+            "Incorrect risk testing",
+            "Over- or under-reliance",
+            "Confidential data in prompt",
+            "Prompt leaking",
+            "Harmful output",
+            "Lack of model transparency",
+            "Data bias",
+        ]
+    }
 
 
 # Node
@@ -158,11 +193,17 @@ def identify_ai_tasks(
     state: RiskGenerationState,
     config: RunnableConfig,
 ):
-    ai_tasks = ai_atlas_nexus.identify_ai_tasks_from_usecases(
-        [state.user_intent], inference_engine, verbose=False
-    )[0]
+    # ai_tasks = ai_atlas_nexus.identify_ai_tasks_from_usecases(
+    #     [state.user_intent], inference_engine, verbose=False
+    # )[0]
 
-    return {"identified_ai_tasks": ai_tasks.prediction}
+    return {
+        "identified_ai_tasks": [
+            "Text Classification",
+            "Document Question Answering",
+            "Text Generation",
+        ]
+    }
 
 
 # Node

@@ -1,12 +1,12 @@
 from functools import partial
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 
 from gaf_guard.core.agents import Agent
-from gaf_guard.core.decorators import workflow, workflow_step
+from gaf_guard.core.decorators import invoke_agent, workflow, workflow_step
 from gaf_guard.toolkit.enums import Role
 
 
@@ -17,6 +17,21 @@ class OrchestratorState(BaseModel):
     environment: Optional[str] = None
     drift_value: Optional[int] = None
     identified_risks: Optional[List[str]] = None
+    dynamic_identified_risks: Optional[List[Dict[str, Any]]] = None
+    random_indices: Optional[List[int]] = None
+    prompt_index: Optional[int] = None
+    transition_risks: Optional[List[str]] = []
+    rolling_values: Optional[Dict[str, List[int]]] = {}
+    risk_report: Optional[Dict] = None
+    high_risk_report: Optional[Dict] = None
+    low_risk_report: Optional[Dict] = None
+    window_size: int = 4
+    transition_risk_report: Optional[Dict] = None
+    guardrails_report: Optional[List[Dict[str, str]]] = None
+
+
+@workflow(role=Role.SYSTEM)
+def initialize(state: OrchestratorState, config: RunnableConfig): ...
 
 
 # Node
@@ -26,7 +41,7 @@ def user_intent(state: OrchestratorState, config: RunnableConfig):
 
 
 # Node
-@workflow(name="Invoking Agent", role=Role.SYSTEM)
+@invoke_agent(name="Invoking Agent", role=Role.SYSTEM)
 def next_agent(agent: Agent, state: OrchestratorState, config: RunnableConfig):
     return agent._WORKFLOW_NAME
 
@@ -35,6 +50,8 @@ class OrchestratorAgent(Agent):
     """
     Initializes a new instance of the Orchestrator Agent class.
     """
+
+    _WORKFLOW_NAME = "Orchestrator Agent"
 
     def __init__(self):
         super(OrchestratorAgent, self).__init__(OrchestratorState)
@@ -45,24 +62,33 @@ class OrchestratorAgent(Agent):
         RiskGeneratorAgent: Agent,
         HumanInTheLoopAgent: Agent,
         StreamAgent: Agent,
-        RisksAssessmentAgent: Agent,
+        # RisksAssessmentAgent: Agent,
+        DynamicRisksAssessmentAgent: Agent,
+        GuardrailsAgent: Agent,
         DriftMonitoringAgent: Agent,
     ):
 
         # Add nodes
+        graph.add_node("initialize", initialize)
         graph.add_node("User Intent", user_intent)
         graph.add_node(RiskGeneratorAgent._WORKFLOW_NAME, RiskGeneratorAgent.workflow)
         graph.add_node(HumanInTheLoopAgent._WORKFLOW_NAME, HumanInTheLoopAgent.workflow)
         graph.add_node(StreamAgent._WORKFLOW_NAME, StreamAgent.workflow)
+        # graph.add_node(
+        #     RisksAssessmentAgent._WORKFLOW_NAME, RisksAssessmentAgent.workflow
+        # )
         graph.add_node(
-            RisksAssessmentAgent._WORKFLOW_NAME, RisksAssessmentAgent.workflow
+            DynamicRisksAssessmentAgent._WORKFLOW_NAME,
+            DynamicRisksAssessmentAgent.workflow,
         )
+        graph.add_node(GuardrailsAgent._WORKFLOW_NAME, GuardrailsAgent.workflow)
         graph.add_node(
             DriftMonitoringAgent._WORKFLOW_NAME, DriftMonitoringAgent.workflow
         )
 
         # Add edges
-        graph.add_edge(START, "User Intent")
+        graph.add_edge(START, "initialize")
+        graph.add_edge("initialize", "User Intent")
         graph.add_conditional_edges(
             source="User Intent",
             path=partial(next_agent, RiskGeneratorAgent),
@@ -78,13 +104,28 @@ class OrchestratorAgent(Agent):
             path=partial(next_agent, StreamAgent),
             path_map=[StreamAgent._WORKFLOW_NAME],
         )
+        # graph.add_conditional_edges(
+        #     source=StreamAgent._WORKFLOW_NAME,
+        #     path=partial(next_agent, RisksAssessmentAgent),
+        #     path_map=[RisksAssessmentAgent._WORKFLOW_NAME, END],
+        # )
         graph.add_conditional_edges(
             source=StreamAgent._WORKFLOW_NAME,
-            path=partial(next_agent, RisksAssessmentAgent),
-            path_map=[RisksAssessmentAgent._WORKFLOW_NAME, END],
+            path=partial(next_agent, DynamicRisksAssessmentAgent),
+            path_map=[DynamicRisksAssessmentAgent._WORKFLOW_NAME, END],
+        )
+        # graph.add_conditional_edges(
+        #     source=RisksAssessmentAgent._WORKFLOW_NAME,
+        #     path=partial(next_agent, DriftMonitoringAgent),
+        #     path_map=[DriftMonitoringAgent._WORKFLOW_NAME],
+        # )
+        graph.add_conditional_edges(
+            source=DynamicRisksAssessmentAgent._WORKFLOW_NAME,
+            path=partial(next_agent, GuardrailsAgent),
+            path_map=[GuardrailsAgent._WORKFLOW_NAME, END],
         )
         graph.add_conditional_edges(
-            source=RisksAssessmentAgent._WORKFLOW_NAME,
+            source=GuardrailsAgent._WORKFLOW_NAME,
             path=partial(next_agent, DriftMonitoringAgent),
             path_map=[DriftMonitoringAgent._WORKFLOW_NAME],
         )

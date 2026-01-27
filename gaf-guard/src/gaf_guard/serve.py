@@ -27,7 +27,7 @@ from langgraph.types import Command
 from rich import print as rprint
 from rich.console import Console
 from rich.panel import Panel
-
+from gaf_guard.core.decorators import workflow_step
 import gaf_guard
 from gaf_guard.config import get_configuration
 from gaf_guard.core.agent_builder import AgentBuilder
@@ -51,11 +51,11 @@ GAF_GUARD_AGENTS = {}
 CLIENT_CONFIGS = {}
 
 
-@app.callback()
-def main() -> None:
-    """
-    GAF Guard Server
-    """
+# @app.callback()
+# def main() -> None:
+#     """
+#     GAF Guard Server
+#     """
 
 
 @server.agent(
@@ -125,7 +125,7 @@ async def orchestrator(
             for dest_type, message in event[1].items():
                 if dest_type == "client":
                     yield Message(
-                        role=Role.AGENT + "/orchestrator",
+                        role="agent" + "/orchestrator",
                         parts=[
                             MessagePart(
                                 content=message.model_dump_json(),
@@ -134,16 +134,17 @@ async def orchestrator(
                         ],
                     )
                 elif dest_type == "logger":
-                    await GAF_GUARD_AGENTS["TrialLoggerAgent"].workflow.ainvoke(
-                        input=message.model_dump(),
-                        config={
-                            "configurable": {
-                                "thread_id": 1,
-                                "trial_name": config["trial_name"],
-                            }
-                            | RUN_CONFIGS
-                        },
-                    )
+                    # await GAF_GUARD_AGENTS["TrialLoggerAgent"].workflow.ainvoke(
+                    #     input=message.model_dump(),
+                    #     config={
+                    #         "configurable": {
+                    #             "thread_id": 1,
+                    #             "trial_name": config["trial_name"],
+                    #         }
+                    #         | RUN_CONFIGS
+                    #     },
+                    # )
+                    ...
 
     except HumanInterruptionException as e:
         yield MessageAwaitRequest(
@@ -218,5 +219,5 @@ def serve(config_file):
     )
 
 
-# if __name__ == "__main__":
-#     app()
+if __name__ == "__main__":
+    app()
