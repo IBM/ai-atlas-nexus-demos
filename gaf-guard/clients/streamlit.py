@@ -16,27 +16,6 @@ from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.file_utils import resolve_file_paths
 
 
-# Declare global session variables
-st.session_state.priority = ["low", "medium", "high"]
-st.set_page_config(
-    page_title="GAF Guard - A real-time monitoring system for risk assessment and drift monitoring.",
-    layout="wide",  # This sets the app to wide mode
-    # initial_sidebar_state="expanded",
-)
-console = Console(log_time=True)
-app = typer.Typer()
-run_configs = {
-    "RiskGeneratorAgent": {
-        "risk_questionnaire_cot": "examples/data/chain_of_thought/risk_questionnaire.json",
-        "risk_generation_cot": "examples/data/chain_of_thought/risk_generation.json",
-    },
-    "DriftMonitoringAgent": {
-        "drift_monitoring_cot": "examples/data/chain_of_thought/drift_monitoring.json"
-    },
-}
-resolve_file_paths(run_configs)
-
-
 # Apply CSS to hide chat_input when app is running (processing)
 st.markdown(
     """
@@ -64,6 +43,27 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
+# Declare global session variables
+st.session_state.priority = ["low", "medium", "high"]
+st.set_page_config(
+    page_title="GAF Guard - A real-time monitoring system for risk assessment and drift monitoring.",
+    layout="wide",  # This sets the app to wide mode
+    # initial_sidebar_state="expanded",
+)
+console = Console(log_time=True)
+app = typer.Typer()
+run_configs = {
+    "RiskGeneratorAgent": {
+        "risk_questionnaire_cot": "examples/data/chain_of_thought/risk_questionnaire.json",
+        "risk_generation_cot": "examples/data/chain_of_thought/risk_generation.json",
+    },
+    "DriftMonitoringAgent": {
+        "drift_monitoring_cot": "examples/data/chain_of_thought/drift_monitoring.json"
+    },
+}
+initial_risks = ["Toxic output", "Hallucination"]
+resolve_file_paths(run_configs)
 
 
 def reconnect(input_host, input_port):
@@ -216,8 +216,8 @@ def render(message: WorkflowStepMessage, simulate=False):
 def add_row():
     st.session_state.setdefault("dynamic_risks", {}).update(
         {
-            len(st.session_state.dynamic_risks): {
-                "risk": st.session_state.risks[0],
+            str(len(st.session_state.dynamic_risks)): {
+                "risk": initial_risks[0],
                 "priority": "low",
                 "threshold": 0.01,
             }
@@ -225,7 +225,7 @@ def add_row():
     )
 
 
-@st.dialog("Add Dynamic Risks", width="medium")
+@st.dialog("Initial risks", width="medium")
 def vote():
     if "dynamic_risks" not in st.session_state:
         add_row()
@@ -240,9 +240,9 @@ def vote():
             with col1:
                 value = st.selectbox(
                     "Risk" if key == "0" else " ",
-                    tuple(st.session_state.risks),
+                    tuple(initial_risks),
                     key=f"col1{key}",
-                    index=st.session_state.risks.index(dynamic_risk["risk"]),
+                    index=initial_risks.index(dynamic_risk["risk"]),
                 )
                 st.session_state.dynamic_risks[key].update({"risk": value})
             with col2:
@@ -342,7 +342,7 @@ async def run_app():
 
         # Accept user input
         if st.session_state.response_type_needed == "dynamic_risks":
-            st.button("Add Dynamic Risks", on_click=vote)
+            st.button("Add Initial Risks", on_click=vote)
         user_input = st.chat_input(
             st.session_state["input_message_query"], key="user_input"
         )
