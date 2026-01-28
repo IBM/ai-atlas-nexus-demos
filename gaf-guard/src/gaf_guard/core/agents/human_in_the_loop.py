@@ -44,12 +44,12 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
                     step_type=MessageType.HITL_QUERY,
                     content=(
                         ("\nSyntax Error, Try Again." if syntax_error else "")
-                        + f"\nPlease add Risks using 'Add Dynamic Risks' button or Type Risks as a python List of dictionaries with keys risk_name, priority, threshold."
+                        + f"\nPlease add Risks using 'Add Initial Risks' button or Type Risks as a python List of dictionaries with keys risk_name, priority, threshold."
                     ),
                     step_name="Human Intervention",
                     step_role=Role.AGENT,
                     step_kwargs={
-                        "input_message_query": "Enter dynamic risks here",
+                        "input_message_query": "Enter initial risks here",
                         "response_type_needed": "dynamic_risks",
                     },
                 ).model_dump()

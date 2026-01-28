@@ -44,7 +44,7 @@ class DynamicRiskAssessmentState(BaseModel):
 
 
 # Node
-@workflow_step(step_name="Dynamic Risk Assessment")
+@workflow_step(step_name="Initial Risk Assessment")
 def assess_risk(
     inference_engine: InferenceEngine,
     taxonomy: str,
@@ -63,10 +63,10 @@ def assess_risk(
 
     for risk in state.dynamic_identified_risks:
         if risk["priority"] == "high":
-            dynamic_risks_high.append(risk["risk_name"])
+            dynamic_risks_high.append(risk["risk"])
         else:
             # if risk not in state.transition_risks:
-            dynamic_risks_low.append(risk["risk_name"])
+            dynamic_risks_low.append(risk["risk"])
 
     dynamic_risks_transition = state.transition_risks
 
@@ -74,7 +74,7 @@ def assess_risk(
         dynamic_risks_low.pop(dynamic_risks_low.index(risk))
 
     rolling_values = state.rolling_values
-    # dynamic_risks = [risk["risk_name"] if risk["priority"]=="high" ]
+    # dynamic_risks = [risk["risk"] if risk["priority"]=="high" ]
 
     # Gather risk info for the given taxonomy
     risks_high: List[Risk] = list(

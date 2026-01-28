@@ -50,14 +50,14 @@ def assess_guardrail(
     dynamic_risks_transition = []
     dynamic_risks_low = []
     guardrails_report = []
-    # dynamic_updated_risks = json.loads('[{"risk_name":"Toxic output", "priority": "low", "threshold": 0.2}, {"risk_name":"Hallucination", "priority": "high", "threshold": 0.01}]')
+    # dynamic_updated_risks = json.loads('[{"risk":"Toxic output", "priority": "low", "threshold": 0.2}, {"risk":"Hallucination", "priority": "high", "threshold": 0.01}]')
 
     for risk in state.dynamic_identified_risks:
         if risk["priority"] == "high":
-            dynamic_risks_high.append(risk["risk_name"])
+            dynamic_risks_high.append(risk["risk"])
         else:
             # if risk not in state.transition_risks:
-            dynamic_risks_low.append(risk["risk_name"])
+            dynamic_risks_low.append(risk["risk"])
 
     dynamic_risks_transition = state.transition_risks
 
