@@ -319,7 +319,9 @@ async def run_app():
         st.session_state.drift_threshold = 8
         st.session_state.messages = []
 
-    run_configs["drift_threshold"] = st.session_state.drift_threshold
+    run_configs["DriftMonitoringAgent"][
+        "drift_threshold"
+    ] = st.session_state.drift_threshold
 
     print_server_msg()
     st.title(
