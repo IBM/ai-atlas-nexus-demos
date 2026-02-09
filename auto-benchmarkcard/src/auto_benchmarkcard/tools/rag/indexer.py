@@ -150,8 +150,11 @@ class MetadataIndexer:
     def _process_huggingface(self, data: Dict[str, Any], benchmark_name: str) -> List[Document]:
         """Convert HuggingFace metadata into documents.
 
+        Handles nested structure where data comes as {"dataset_id": {...metadata...}}
+        e.g., {"nyu-mll/glue": {"readme_markdown": "...", "tags": [...], ...}}
+
         Args:
-            data: HuggingFace metadata dictionary.
+            data: HuggingFace metadata dictionary (possibly nested by dataset ID).
             benchmark_name: Name of the benchmark.
 
         Returns:
@@ -163,6 +166,42 @@ class MetadataIndexer:
         if data is None:
             return docs
 
+        # Check if data is nested by dataset ID (e.g., {"nyu-mll/glue": {...}})
+        # If the first value is a dict with typical HF fields, it's nested
+        first_value = next(iter(data.values()), None) if data else None
+        is_nested = (
+            isinstance(first_value, dict)
+            and any(k in first_value for k in ["readme_markdown", "tags", "id", "downloads"])
+        )
+
+        if is_nested:
+            # Process each dataset in the nested structure
+            for dataset_id, dataset_data in data.items():
+                if not isinstance(dataset_data, dict):
+                    continue
+                docs.extend(self._process_single_hf_dataset(dataset_data, benchmark_name, dataset_id))
+        else:
+            # Data is not nested, process directly
+            docs.extend(self._process_single_hf_dataset(data, benchmark_name))
+
+        return docs
+
+    def _process_single_hf_dataset(
+        self, data: Dict[str, Any], benchmark_name: str, dataset_id: str = None
+    ) -> List[Document]:
+        """Process a single HuggingFace dataset's metadata.
+
+        Args:
+            data: Single dataset's metadata dictionary.
+            benchmark_name: Name of the benchmark.
+            dataset_id: Optional dataset identifier for metadata.
+
+        Returns:
+            List of Document objects from the dataset metadata.
+        """
+        docs = []
+        id_suffix = f" ({dataset_id})" if dataset_id else ""
+
         # Basic dataset information
         basic_fields = ["id", "author", "downloads", "likes", "tags", "created_at"]
         basic_info = {k: v for k, v in data.items() if k in basic_fields}
@@ -171,18 +210,20 @@ class MetadataIndexer:
             if clean_text.strip():
                 docs.append(
                     Document(
-                        page_content=f"HuggingFace Dataset Information:\n{clean_text}",
+                        page_content=f"HuggingFace Dataset Information{id_suffix}:\n{clean_text}",
                         metadata={
                             "source": "huggingface",
                             "type": "basic_info",
                             "benchmark": benchmark_name,
+                            "dataset_id": dataset_id,
                         },
                     )
                 )
 
-        # README documentation
+        # README documentation - this contains rich info like size, format, licensing
         if "readme_markdown" in data and data["readme_markdown"]:
             readme_chunks = self.text_splitter.split_text(data["readme_markdown"])
+            logger.debug(f"Indexing HuggingFace readme: {len(readme_chunks)} chunks{id_suffix}")
             for i, chunk in enumerate(readme_chunks):
                 docs.append(
                     Document(
@@ -192,6 +233,7 @@ class MetadataIndexer:
                             "type": "readme",
                             "chunk_index": i,
                             "benchmark": benchmark_name,
+                            "dataset_id": dataset_id,
                         },
                     )
                 )
@@ -202,11 +244,12 @@ class MetadataIndexer:
             if clean_text.strip():
                 docs.append(
                     Document(
-                        page_content=f"HuggingFace Dataset Metadata:\n{clean_text}",
+                        page_content=f"HuggingFace Dataset Metadata{id_suffix}:\n{clean_text}",
                         metadata={
                             "source": "huggingface",
                             "type": "dataset_info",
                             "benchmark": benchmark_name,
+                            "dataset_id": dataset_id,
                         },
                     )
                 )
