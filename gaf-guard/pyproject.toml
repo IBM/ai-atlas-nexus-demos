@@ -70,4 +70,4 @@ src = ["*.json"]
 version = {attr = "gaf_guard.__version__"}
 
 [project.scripts]
-gaf-guard = "gaf_guard.serve:app"
+gaf-guard = "gaf_guard.redirect:app"

@@ -1,17 +1,13 @@
+import json
 import logging
 import os
 import uuid
-
-
-os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
-import json
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from functools import reduce
 from pathlib import Path
 
 import acp_sdk
-import typer
 import yaml
 from acp_sdk.models import (
     AnyUrl,
@@ -31,7 +27,6 @@ from rich.panel import Panel
 import gaf_guard
 from gaf_guard.config import get_configuration
 from gaf_guard.core.agent_builder import AgentBuilder
-from gaf_guard.core.decorators import workflow_step
 from gaf_guard.core.models import WorkflowMessage
 from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.exceptions import HumanInterruptionException
@@ -44,19 +39,11 @@ httpx_logger.setLevel(logging.ERROR)
 LOGGER = configure_logger(__name__)
 
 system_config = get_configuration()
-app = typer.Typer()
 console = Console()
 
 server = Server()
 GAF_GUARD_AGENTS = {}
 CLIENT_CONFIGS = {}
-
-
-@app.callback()
-def main() -> None:
-    """
-    GAF Guard Server
-    """
 
 
 @server.agent(
@@ -133,17 +120,16 @@ async def orchestrator(
                         ],
                     )
                 elif dest_type == "logger":
-                    # await GAF_GUARD_AGENTS["TrialLoggerAgent"].workflow.ainvoke(
-                    #     input=message.model_dump(),
-                    #     config={
-                    #         "configurable": {
-                    #             "thread_id": 1,
-                    #             "trial_name": config["trial_name"],
-                    #         }
-                    #         | RUN_CONFIGS
-                    #     },
-                    # )
-                    ...
+                    await GAF_GUARD_AGENTS["TrialLoggerAgent"].workflow.ainvoke(
+                        input=message.model_dump(),
+                        config={
+                            "configurable": {
+                                "thread_id": 1,
+                                "trial_name": config["trial_name"],
+                            }
+                            | RUN_CONFIGS
+                        },
+                    )
 
     except HumanInterruptionException as e:
         yield MessageAwaitRequest(
@@ -172,8 +158,7 @@ async def run_benchmark(
     )
 
 
-@app.command()
-def serve(config_file):
+def start_server(config_file):
     os.system("clear")
     console.rule(f"[bold blue]GAF Guard[/bold blue]")
     console.print(f"[bold yellow]:rocket: Starting AI Governance Orchestrator\n")
@@ -216,7 +201,3 @@ def serve(config_file):
         configure_telemetry=False,
         log_level=logging.ERROR,
     )
-
-
-# if __name__ == "__main__":
-#     app()

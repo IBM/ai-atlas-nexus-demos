@@ -7,7 +7,7 @@ from datetime import datetime
 from io import StringIO
 from typing import Any, Dict, Iterator
 
-from gaf_guard.clients.adaptors.base import StreamAdapter, StreamMessage
+from gaf_guard.clients.stream_adaptors.base import StreamAdapter, StreamMessage
 
 
 class JSONAdapter(StreamAdapter):
