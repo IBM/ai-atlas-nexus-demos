@@ -6,7 +6,7 @@ class CustomStrEnum(StrEnum):
         """
         Return the lower-cased version of the member name.
         """
-        return name
+        return name.lower()
 
 
 class MessageType(CustomStrEnum):
@@ -29,3 +29,9 @@ class Role(StrEnum):
 class Serializer(Enum):
     YAML = auto()
     JSON = auto()
+
+
+class UserInputType(CustomStrEnum):
+    USER_INTENT = auto()
+    INITIAL_RISKS = auto()
+    INPUT_PROMPT = auto()

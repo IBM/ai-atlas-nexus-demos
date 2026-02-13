@@ -23,9 +23,9 @@ yaml.SafeDumper.add_multi_representer(
 
 # Graph state
 class TrialLoggerAgentState(BaseModel):
-    step_name: str
-    step_role: Role
-    step_type: MessageType
+    name: str
+    role: Role
+    type: MessageType
     content: Any
 
 

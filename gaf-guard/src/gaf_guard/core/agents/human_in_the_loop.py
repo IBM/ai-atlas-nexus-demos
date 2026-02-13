@@ -11,8 +11,8 @@ from rich.console import Console
 
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
-from gaf_guard.core.models import WorkflowStepMessage
-from gaf_guard.toolkit.enums import MessageType, Role
+from gaf_guard.core.models import WorkflowMessage
+from gaf_guard.toolkit.enums import MessageType, Role, UserInputType
 from gaf_guard.toolkit.exceptions import HumanInterruptionException
 
 
@@ -39,27 +39,26 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
     syntax_error = False
     while True:
         try:
-            dynamic_updated_risks = interrupt(
-                WorkflowStepMessage(
-                    step_type=MessageType.HITL_QUERY,
+            response = interrupt(
+                WorkflowMessage(
+                    name="Human Intervention",
+                    role=Role.AGENT,
+                    type=MessageType.HITL_QUERY,
+                    accept=UserInputType.INITIAL_RISKS,
                     content=(
                         ("\nSyntax Error, Try Again." if syntax_error else "")
                         + f"\nPlease add Risks using 'Add Initial Risks' button or Type Risks as a python List of dictionaries with keys risk_name, priority, threshold."
                     ),
-                    step_name="Human Intervention",
-                    step_role=Role.AGENT,
-                    step_kwargs={
-                        "input_message_query": "Enter initial risks here",
-                        "response_type_needed": "dynamic_risks",
-                    },
                 ).model_dump()
             )
         except GraphInterrupt as e:
             raise HumanInterruptionException(json.dumps(e.args[0][0].value))
 
         try:
-            if len(dynamic_updated_risks["response"]) > 0:
-                dynamic_updated_risks = json.loads(dynamic_updated_risks["response"])
+            if len(response[UserInputType.INITIAL_RISKS]) > 0:
+                dynamic_updated_risks = json.loads(
+                    response[UserInputType.INITIAL_RISKS]
+                )
             else:
                 dynamic_updated_risks = json.loads(
                     '[{"risk_name":"Toxic output", "priority": "low", "threshold": 0.2}, {"risk_name":"Hallucination", "priority": "high", "threshold": 0.01}]'

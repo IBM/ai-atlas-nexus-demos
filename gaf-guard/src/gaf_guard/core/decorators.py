@@ -8,7 +8,7 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.progress import Progress
 
-from gaf_guard.core.models import WorkflowStepMessage
+from gaf_guard.core.models import WorkflowMessage
 from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.logging import configure_logger
 
@@ -41,11 +41,11 @@ def workflow(
             console.print()
 
             write_to_stream = get_stream_writer()
-            message = WorkflowStepMessage(
-                step_name=name or func.__name__,
-                step_type=MessageType.WORKFLOW_STARTED,
-                step_role=role,
-                step_desc=desc,
+            message = WorkflowMessage(
+                name=name or func.__name__,
+                type=MessageType.WORKFLOW_STARTED,
+                role=role,
+                desc=desc,
                 content="New Workflow Started",
             )
             write_to_stream(
@@ -130,12 +130,12 @@ def workflow_step(
         def wrapper(*args, config: RunnableConfig, **kwargs):
 
             write_to_stream = get_stream_writer()
-            message = WorkflowStepMessage(
-                step_type=MessageType.STEP_STARTED,
-                step_role=Role.SYSTEM,
-                step_name=step_name or func.__name__,
-                step_desc=step_desc,
-                step_kwargs=step_kwargs,
+            message = WorkflowMessage(
+                type=MessageType.STEP_STARTED,
+                role=Role.SYSTEM,
+                name=step_name or func.__name__,
+                desc=step_desc,
+                kwargs=step_kwargs,
             )
             write_to_stream({"client": message})
 
@@ -144,8 +144,8 @@ def workflow_step(
 
             event_message = message.model_copy(
                 update={
-                    "step_role": step_role,
-                    "step_type": MessageType.STEP_DATA,
+                    "role": step_role,
+                    "type": MessageType.STEP_DATA,
                     "content": event,
                 }
             )
@@ -157,8 +157,8 @@ def workflow_step(
                 {
                     "client": message.model_copy(
                         update={
-                            "step_type": MessageType.STEP_COMPLETED,
-                            "step_role": Role.SYSTEM,
+                            "type": MessageType.STEP_COMPLETED,
+                            "role": Role.SYSTEM,
                         }
                     )
                 }

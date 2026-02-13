@@ -32,7 +32,7 @@ import gaf_guard
 from gaf_guard.config import get_configuration
 from gaf_guard.core.agent_builder import AgentBuilder
 from gaf_guard.core.decorators import workflow_step
-from gaf_guard.core.models import WorkflowStepMessage
+from gaf_guard.core.models import WorkflowMessage
 from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.exceptions import HumanInterruptionException
 from gaf_guard.toolkit.logging import configure_logger
@@ -90,9 +90,7 @@ async def orchestrator(
 ) -> AsyncGenerator[RunYield, RunYieldResume]:
 
     try:
-        message = WorkflowStepMessage(
-            **json.loads(str(reduce(lambda x, y: x + y, input)))
-        )
+        message = WorkflowMessage(**json.loads(str(reduce(lambda x, y: x + y, input))))
 
         # Get run configs
         RUN_CONFIGS = message.run_configs or {}
@@ -108,13 +106,13 @@ async def orchestrator(
                 "configurable": {"thread_id": context.session.id} | RUN_CONFIGS,
             },
         )
-        if message.step_type == MessageType.HITL_RESPONSE:
+        if message.type == MessageType.HITL_RESPONSE:
             state_dict = Command(resume=message.content)
-        elif message.step_type == MessageType.WORKFLOW_INPUT:
+        elif message.type == MessageType.WORKFLOW_INPUT:
             state_dict = message.content
         else:
             raise Exception(
-                f"Invalid message type received: {message.step_type}. Valid types are: {MessageType._member_names_}"
+                f"Invalid message type received: {message.type}. Valid types are: {MessageType._member_names_}"
             )
 
         for event in GAF_GUARD_AGENTS["OrchestratorAgent"].workflow.stream(
@@ -135,16 +133,17 @@ async def orchestrator(
                         ],
                     )
                 elif dest_type == "logger":
-                    await GAF_GUARD_AGENTS["TrialLoggerAgent"].workflow.ainvoke(
-                        input=message.model_dump(),
-                        config={
-                            "configurable": {
-                                "thread_id": 1,
-                                "trial_name": config["trial_name"],
-                            }
-                            | RUN_CONFIGS
-                        },
-                    )
+                    # await GAF_GUARD_AGENTS["TrialLoggerAgent"].workflow.ainvoke(
+                    #     input=message.model_dump(),
+                    #     config={
+                    #         "configurable": {
+                    #             "thread_id": 1,
+                    #             "trial_name": config["trial_name"],
+                    #         }
+                    #         | RUN_CONFIGS
+                    #     },
+                    # )
+                    ...
 
     except HumanInterruptionException as e:
         yield MessageAwaitRequest(
