@@ -8,11 +8,14 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.progress import Progress
 
-from gaf_guard.core.models import WorkflowStepMessage
+from gaf_guard.core.models import WorkflowMessage
 from gaf_guard.toolkit.enums import MessageType, Role
+from gaf_guard.toolkit.logging import configure_logger
 
 
 STATUS_DISPLAY = {}
+console = Console()
+LOGGER = configure_logger(__name__)
 
 
 def workflow(
@@ -26,8 +29,49 @@ def workflow(
 
         def wrapper(*args, config: RunnableConfig, **kwargs):
             client_id = config.get("configurable", {}).get("thread_id", 1)
-            agent_name = args[0]._WORKFLOW_NAME
+            console.print()
+            console.print(
+                Panel(
+                    Group(
+                        f"Incoming request:\n{json.dumps(args[0].model_dump(include=set({'user_intent', 'prompt'}), exclude_none=True), indent=2)}"
+                    ),
+                    title=f"{config.get('configurable', {}).get('trial_name', 'Trial_')} | Client: {client_id}",
+                )
+            )
+            console.print()
 
+            write_to_stream = get_stream_writer()
+            message = WorkflowMessage(
+                name=name or func.__name__,
+                type=MessageType.WORKFLOW_STARTED,
+                role=role,
+                desc=desc,
+                content="New Workflow Started",
+            )
+            write_to_stream(
+                {"client": message} | ({"logger": message} if log_output else {})
+            )
+
+            # Call the actual graph node
+            return func(*args, **kwargs, config=config)
+
+        return wrapper
+
+    return decorator
+
+
+def invoke_agent(
+    name: Optional[str] = None,
+    desc: Optional[str] = None,
+    role: Role = Role.SYSTEM,
+    log_output: bool = True,
+):
+
+    def decorator(func):
+
+        def wrapper(*args, config: RunnableConfig, **kwargs):
+            client_id = config.get("configurable", {}).get("thread_id", 1)
+            agent_name = args[0]._WORKFLOW_NAME
             display = STATUS_DISPLAY.setdefault(
                 client_id,
                 {
@@ -52,33 +96,22 @@ def workflow(
                 "name": agent_name,
             }
 
-            display["live"].start()
-            display["live"].update(
-                Panel(
-                    Group(
-                        f"Incoming request:\n{json.dumps(args[1].model_dump(include=set({'user_intent', 'prompt'}), exclude_none=True), indent=2)}\n",
-                        display["progress"],
-                    ),
-                    title=f"{config.get('configurable', {}).get('trial_name', 'Trial_')} | Client: {client_id}",
-                )
-            )
-
-            write_to_stream = get_stream_writer()
-            message = WorkflowStepMessage(
-                step_name=name or func.__name__,
-                step_type=MessageType.WORKFLOW_STARTED,
-                step_role=role,
-                step_desc=desc,
-                content=agent_name,
-            )
-            write_to_stream(
-                {"client": message} | ({"logger": message} if log_output else {})
+            # display["live"].start()
+            # display["live"].update(
+            #     Panel(
+            #         Group(
+            #             f"Incoming request:\n{json.dumps(args[1].model_dump(include=set({'user_intent', 'prompt'}), exclude_none=True), indent=2)}\n",
+            #             display["progress"],
+            #         ),
+            #         title=f"{config.get('configurable', {}).get('trial_name', 'Trial_')} | Client: {client_id}",
+            #     )
+            # )
+            console.log(
+                f"[bold yellow]Invoking Agent[/bold yellow][bold white]...{agent_name}[/bold white]"
             )
 
             # Call the actual graph node
-            event = func(*args, **kwargs, config=config)
-
-            return event
+            return func(*args, **kwargs, config=config)
 
         return wrapper
 
@@ -97,12 +130,12 @@ def workflow_step(
         def wrapper(*args, config: RunnableConfig, **kwargs):
 
             write_to_stream = get_stream_writer()
-            message = WorkflowStepMessage(
-                step_type=MessageType.STEP_STARTED,
-                step_role=step_role,
-                step_name=step_name or func.__name__,
-                step_desc=step_desc,
-                step_kwargs=step_kwargs,
+            message = WorkflowMessage(
+                type=MessageType.STEP_STARTED,
+                role=Role.SYSTEM,
+                name=step_name or func.__name__,
+                desc=step_desc,
+                kwargs=step_kwargs,
             )
             write_to_stream({"client": message})
 
@@ -110,7 +143,11 @@ def workflow_step(
             event = func(*args, **kwargs, config=config)
 
             event_message = message.model_copy(
-                update={"step_type": MessageType.STEP_DATA, "content": event}
+                update={
+                    "role": step_role,
+                    "type": MessageType.STEP_DATA,
+                    "content": event,
+                }
             )
             write_to_stream(
                 {"client": event_message}
@@ -119,7 +156,10 @@ def workflow_step(
             write_to_stream(
                 {
                     "client": message.model_copy(
-                        update={"step_type": MessageType.STEP_COMPLETED}
+                        update={
+                            "type": MessageType.STEP_COMPLETED,
+                            "role": Role.SYSTEM,
+                        }
                     )
                 }
             )

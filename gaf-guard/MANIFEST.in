@@ -1,0 +1,1 @@
+include gaf-guard/src/gaf_guard/chain_of_thought/*.json

@@ -1,17 +1,13 @@
+import json
 import logging
 import os
 import uuid
-
-
-os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
-import json
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from functools import reduce
 from pathlib import Path
 
 import acp_sdk
-import typer
 import yaml
 from acp_sdk.models import (
     AnyUrl,
@@ -31,7 +27,7 @@ from rich.panel import Panel
 import gaf_guard
 from gaf_guard.config import get_configuration
 from gaf_guard.core.agent_builder import AgentBuilder
-from gaf_guard.core.models import WorkflowStepMessage
+from gaf_guard.core.models import WorkflowMessage
 from gaf_guard.toolkit.enums import MessageType, Role
 from gaf_guard.toolkit.exceptions import HumanInterruptionException
 from gaf_guard.toolkit.logging import configure_logger
@@ -43,19 +39,11 @@ httpx_logger.setLevel(logging.ERROR)
 LOGGER = configure_logger(__name__)
 
 system_config = get_configuration()
-app = typer.Typer()
 console = Console()
 
 server = Server()
 GAF_GUARD_AGENTS = {}
 CLIENT_CONFIGS = {}
-
-
-@app.callback()
-def main() -> None:
-    """
-    GAF Guard Server
-    """
 
 
 @server.agent(
@@ -89,9 +77,7 @@ async def orchestrator(
 ) -> AsyncGenerator[RunYield, RunYieldResume]:
 
     try:
-        message = WorkflowStepMessage(
-            **json.loads(str(reduce(lambda x, y: x + y, input)))
-        )
+        message = WorkflowMessage(**json.loads(str(reduce(lambda x, y: x + y, input))))
 
         # Get run configs
         RUN_CONFIGS = message.run_configs or {}
@@ -107,13 +93,13 @@ async def orchestrator(
                 "configurable": {"thread_id": context.session.id} | RUN_CONFIGS,
             },
         )
-        if message.step_type == MessageType.HITL_RESPONSE:
+        if message.type == MessageType.HITL_RESPONSE:
             state_dict = Command(resume=message.content)
-        elif message.step_type == MessageType.WORKFLOW_INPUT:
+        elif message.type == MessageType.WORKFLOW_INPUT:
             state_dict = message.content
         else:
             raise Exception(
-                f"Invalid message type received: {message.step_type}. Valid types are: {MessageType._member_names_}"
+                f"Invalid message type received: {message.type}. Valid types are: {MessageType._member_names_}"
             )
 
         for event in GAF_GUARD_AGENTS["OrchestratorAgent"].workflow.stream(
@@ -125,7 +111,7 @@ async def orchestrator(
             for dest_type, message in event[1].items():
                 if dest_type == "client":
                     yield Message(
-                        role=Role.AGENT + "/orchestrator",
+                        role="agent" + "/orchestrator",
                         parts=[
                             MessagePart(
                                 content=message.model_dump_json(),
@@ -172,8 +158,7 @@ async def run_benchmark(
     )
 
 
-@app.command()
-def serve(config_file):
+def start_server(config_file):
     os.system("clear")
     console.rule(f"[bold blue]GAF Guard[/bold blue]")
     console.print(f"[bold yellow]:rocket: Starting AI Governance Orchestrator\n")
@@ -216,7 +201,3 @@ def serve(config_file):
         configure_telemetry=False,
         log_level=logging.ERROR,
     )
-
-
-# if __name__ == "__main__":
-#     app()

@@ -7,6 +7,12 @@ from math import comb
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from ai_atlas_nexus.blocks.prompt_builder import ZeroShotPromptBuilder
+from ai_atlas_nexus.blocks.prompt_templates import (
+    AI_TASKS_TEMPLATE,
+    QUESTIONNAIRE_COT_TEMPLATE,
+)
+from ai_atlas_nexus.data import load_resource
 from deepeval.metrics import GEval
 from deepeval.models import OllamaModel
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
@@ -14,18 +20,10 @@ from jinja2 import Template
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
-from ai_atlas_nexus.blocks.prompt_builder import ZeroShotPromptBuilder
-from ai_atlas_nexus.blocks.prompt_templates import (
-    AI_TASKS_TEMPLATE,
-    QUESTIONNAIRE_COT_TEMPLATE,
-)
-from ai_atlas_nexus.data import load_resource
-from ai_atlas_nexus.library import AIAtlasNexus
 
+from gaf_guard.core import ai_atlas_nexus
 from gaf_guard.core.agents import Agent
 
-
-ai_atlas_nexus = AIAtlasNexus()
 
 model = OllamaModel(model="granite3.2:8b")
 

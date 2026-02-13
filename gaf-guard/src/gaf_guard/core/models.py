@@ -2,15 +2,15 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
-from gaf_guard.toolkit.enums import MessageType, Role
+from gaf_guard.toolkit.enums import MessageType, Role, UserInputType
 
 
-class WorkflowStepMessage(BaseModel):
+class WorkflowMessage(BaseModel):
 
-    step_name: str
-    step_type: MessageType
-    step_role: Role
-    step_desc: Optional[str] = None
+    name: str
+    role: Role
+    type: MessageType
+    desc: Optional[str] = None
     content: Optional[Any] = None
-    step_kwargs: Dict = {}
+    accept: Optional[UserInputType] = None
     run_configs: Optional[Dict] = None

@@ -41,7 +41,9 @@ dependencies = [
     "prettytable",
     "isort",
     "pre-commit",
-    "uvicorn==0.35.0"
+    "uvicorn==0.35.0",
+    "streamlit",
+    "deepteam"
 ]
 
 [project.optional-dependencies]
@@ -68,4 +70,4 @@ src = ["*.json"]
 version = {attr = "gaf_guard.__version__"}
 
 [project.scripts]
-gaf-guard = "gaf_guard.serve:app"
+gaf-guard = "gaf_guard.redirect:app"
