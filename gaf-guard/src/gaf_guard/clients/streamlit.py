@@ -4,7 +4,7 @@ import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Annotated, Dict, List
+from typing import Dict, List
 
 import streamlit as st
 from acp_sdk.client import Client

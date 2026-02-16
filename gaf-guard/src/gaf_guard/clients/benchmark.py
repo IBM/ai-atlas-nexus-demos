@@ -14,7 +14,7 @@ console = Console(log_time=True)
 app = typer.Typer()
 
 
-async def run_benchmark(host, port, trial_dir) -> None:
+async def run_benchmark(ground_trial, host, port) -> None:
     async with Client(base_url=f"http://{host}:{port}") as client:
         with console.status(
             "[italic bold yellow]Running GAF-Guard benchmark...[/]",
@@ -26,7 +26,9 @@ async def run_benchmark(host, port, trial_dir) -> None:
                     Message(
                         parts=[
                             MessagePart(
-                                content=json.dumps({"trial_dir": trial_dir}),
+                                content=json.dumps(
+                                    {"ground_trial": json.load(open(ground_trial, "r"))}
+                                ),
                                 content_type="text/plain",
                             )
                         ]

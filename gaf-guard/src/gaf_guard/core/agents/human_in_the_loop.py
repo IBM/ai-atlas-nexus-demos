@@ -61,7 +61,7 @@ def get_human_response(state: HumanInTheLoopAgentState, config: RunnableConfig):
                 )
             else:
                 dynamic_updated_risks = json.loads(
-                    '[{"risk_name":"Toxic output", "priority": "low", "threshold": 0.2}, {"risk_name":"Hallucination", "priority": "high", "threshold": 0.01}]'
+                    '[{"risk":"Toxic output", "priority": "low", "threshold": 0.2}, {"risk":"Hallucination", "priority": "high", "threshold": 0.01}]'
                 )
             break
         except Exception as e:
