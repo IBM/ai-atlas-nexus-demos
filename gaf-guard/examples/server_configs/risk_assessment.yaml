@@ -54,7 +54,7 @@ inference_engine:
 
 agents:
   BenchmarkAgent:
-    ground_truth: examples/data/ground_truth/customer_complaints.json
+    trial_dir: trials
   TrialLoggerAgent:
       trial_dir: trials
       serializer: JSON # YAML, JSON

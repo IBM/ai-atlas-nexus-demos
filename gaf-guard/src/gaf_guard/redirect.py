@@ -8,6 +8,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from gaf_guard.clients.benchmark import run_benchmark
 from gaf_guard.clients.cli import run_cli_client
 from gaf_guard.serve import start_server
 from gaf_guard.toolkit.logging import configure_logger
@@ -30,7 +31,24 @@ def main() -> None:
 
 
 @app.command()
-def benchmark(config_file): ...
+def benchmark(
+    ground_trial: Annotated[
+        str,
+        typer.Argument(
+            help="Please enter ground truth file path.",
+            rich_help_panel="Ground Truth Trial",
+        ),
+    ],
+    host: Annotated[
+        str,
+        typer.Argument(help="Please enter GAF Guard Host.", rich_help_panel="Hostname"),
+    ] = "localhost",
+    port: Annotated[
+        int,
+        typer.Argument(help="Please enter GAF Guard Port.", rich_help_panel="Port"),
+    ] = 8000,
+):
+    asyncio.run(run_benchmark(ground_trial, host, port))
 
 
 @app.command()

@@ -61,10 +61,8 @@ This project targets python version ">=3.11, <3.12". You can download specific v
    - `gaf-guard serve examples/server_configs/risk_assessment.yaml`
 
 5. Start the GAF-Guard client
-   - `gaf-guard client streamlit`
-
-6. To run benchmark on already logged JSON trajectories. `trails` directory is where all trials are stored.
-   - `gaf-guard benchmark --host localhost --port 8000 --trial-dir trials`
+   - Streamlit Client: `gaf-guard client streamlit`
+   - CLI Client: `gaf-guard client cli`
 
 ## Streamlit client demo
 
