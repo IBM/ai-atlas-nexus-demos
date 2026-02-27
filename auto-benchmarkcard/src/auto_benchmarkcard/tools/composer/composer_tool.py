@@ -136,11 +136,14 @@ class DataInfo(BaseModel):
     )
     size: str = Field(
         ...,
-        description="Dataset size with specific numbers (e.g., '10,000 examples', '50K questions across 3 splits')",
+        description="Dataset size. Prefer number of examples from paper (e.g., '817 questions'). "
+        "If only disk size from HuggingFace is available, use that (e.g., '1.24 GB')",
     )
     format: str = Field(
         ...,
-        description="Data structure, file formats, and organization (e.g., 'JSON with question-answer pairs', 'CSV with multiple choice options')",
+        description="The data format as described in the paper or README "
+        "(e.g., 'JSON with question-answer pairs'). If only the HuggingFace hosting "
+        "format is known, note it as such (e.g., 'parquet (HuggingFace hosting format)')",
     )
     annotation: str = Field(
         ...,
@@ -360,8 +363,44 @@ def compose_benchmark_card(
         "ethical_and_legal_considerations": "ethics privacy licensing consent compliance regulations",
     }
 
+    has_paper = bool(docling_output and docling_output.get("success"))
+    has_hf = bool(hf_metadata)
+    has_unitxt = bool(unitxt_metadata)
+
+    # Build source priority text dynamically based on available sources
+    if has_paper:
+        source_priority_text = """SOURCE PRIORITY (varies by field type):
+
+CONCEPTUAL FIELDS (Paper is primary source):
+- overview, goal, audience, tasks, limitations, out_of_scope_uses,
+  methods, calculation, interpretation, baseline_results, validation,
+  similar_benchmarks, annotation
+→ Priority: Paper > HuggingFace > UnitXT
+
+OPERATIONAL/METADATA FIELDS (HuggingFace is primary source):
+- size, format, languages, data_licensing, resources
+→ Priority: HuggingFace > Paper > UnitXT
+
+STRUCTURAL FIELDS (UnitXT is primary source):
+- metrics, domains, data_type
+→ Priority: UnitXT tags > Paper > HuggingFace
+
+WHEN SOURCES CONFLICT:
+- Use the value from the PRIMARY source for that field type
+- Note the conflict in provenance (see CONFLICT HANDLING below)
+- Do NOT average or merge conflicting values"""
+    else:
+        source_priority_text = """SOURCE PRIORITY (no academic paper available):
+1. HuggingFace README and metadata (PRIMARY - treat as authoritative description)
+2. UnitXT metadata (catalog and task metadata)
+3. Extracted IDs (for URLs and identifiers)
+
+NOTE: No academic paper was found for this benchmark.
+Rely on HuggingFace README as the main descriptive source.
+For structural/task fields, prefer UnitXT metadata."""
+
     generated_sections = {}
-    all_provenance = {}  # Track provenance for all sections
+    all_provenance = {}
 
     for section_name, section_class in sections:
         logger.debug("Generating %s", section_name.replace("_", " ").title())
@@ -490,7 +529,7 @@ def compose_benchmark_card(
                 )
                 example_text += f"\n\nBAD EXAMPLE (avoid this):\n{bad_json}"
 
-        # set up section-specific prompt with enhanced instructions and priority order
+        # set up section-specific prompt with enhanced instructions and field-specific priority
         section_prompt = ChatPromptTemplate.from_messages(
             [
                 (
@@ -504,11 +543,7 @@ CRITICAL RULES:
 4. Be concise and specific
 5. Return only valid JSON
 
-SOURCE PRIORITY (use in this order):
-1. Paper Content (HIGHEST PRIORITY - most authoritative source)
-2. HuggingFace metadata (official dataset information)
-3. UnitXT metadata (catalog metadata)
-4. Extracted IDs (for URLs and identifiers)
+{source_priority_text}
 
 FORBIDDEN:
 - Generic examples (e.g., "BERT-large achieves 80.5%") unless explicitly in sources
@@ -523,9 +558,10 @@ FIELD-SPECIFIC RULES (use "Not specified" if not found in sources):
 - methodology.interpretation: ONLY include human baseline percentage if paper explicitly states it. Otherwise write "Not specified"
 - methodology.calculation: ONLY describe if paper explains how metrics are computed. Otherwise write "Not specified"
 - methodology.validation: ONLY describe if paper explains validation approach. Otherwise write "Not specified"
-- benchmark_details.similar_benchmarks: ONLY list benchmarks explicitly mentioned/compared in the paper. Otherwise write "Not specified"
-- data.size: Use EXACT numbers from sources (e.g., "1.24 GB" from HuggingFace, "10K examples" from paper). Do NOT approximate or invent numbers.
-- data.format: Use format from HuggingFace tags (e.g., "parquet") or paper. Otherwise write "Not specified"
+- benchmark_details.similar_benchmarks: ONLY list benchmarks explicitly mentioned/compared in the paper or sources. Otherwise write "Not specified"
+- data.size: Prefer number of examples from paper (e.g., "817 questions", "10K examples"). If paper gives no count, use HuggingFace disk size (e.g., "1.24 GB"). Do NOT conflate example counts with disk size. Do NOT approximate or invent numbers.
+- data.format: Prefer the original format described in the paper or README (e.g., "JSON with question-answer pairs"). If only the HuggingFace hosting format is available, note it (e.g., "parquet (HuggingFace hosting format)"). Otherwise write "Not specified"
+- benchmark_details.languages: Use full language names (e.g., "English" not "en"). Check HuggingFace tags and paper.
 
 PROVENANCE TRACKING (REQUIRED):
 For EVERY field you fill in (except "Not specified" values), you MUST add an entry to the "provenance" field.
@@ -543,14 +579,24 @@ Example: If you set size to "1.24 GB" from HuggingFace, include:
 - Include the EXACT text snippet that supports your value
 - Omit fields set to "Not specified" from provenance
 
+CONFLICT HANDLING:
+If two sources provide different values for the same field, use the value from the
+primary source for that field type (see SOURCE PRIORITY above), but document the
+conflict in provenance by adding a "conflict" key:
+  "provenance": {{{{"size": {{{{
+    "source": "huggingface",
+    "evidence": "Total amount of disk used: 1.24 GB",
+    "conflict": "Paper does not specify total dataset size"
+  }}}}}}}}
+
 {example_text}""",
                 ),
                 (
                     "user",
                     f"""Query: {{query}}
 
-METADATA SOURCES (in priority order):
-1. PAPER CONTENT (highest priority - use this first):
+METADATA SOURCES:
+1. PAPER CONTENT:
 {{paper_content}}
 
 2. HuggingFace Dataset:
@@ -563,9 +609,10 @@ METADATA SOURCES (in priority order):
 {{extracted_ids}}
 
 INSTRUCTIONS:
-- Extract information from sources in priority order (1 → 4)
-- Paper content is the most authoritative source - use it first
-- Only use HuggingFace/UnitXT if information is NOT found in paper
+- Use the field-specific source priority described above (different fields have different primary sources)
+- For conceptual fields (overview, goal, methods, etc.) prefer Paper content
+- For operational fields (size, format, languages, licensing) prefer HuggingFace
+- For structural fields (metrics, domains, data_type) prefer UnitXT
 - If a field cannot be found in ANY source, use "Not specified"
 
 Generate {section_name} section using ONLY the metadata above.""",

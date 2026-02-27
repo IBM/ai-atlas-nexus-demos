@@ -279,6 +279,52 @@ Or run directly:
 python -m auto-benchmarkcard process glue
 ```
 
+### Standalone Tool Usage
+
+Individual tools can be used independently without running the full workflow. This is useful for integrating specific components into your own pipelines.
+
+```python
+# Fetch UnitXT benchmark metadata
+from auto_benchmarkcard import unitxt_benchmark_lookup
+
+metadata = unitxt_benchmark_lookup("glue")
+print(f"Benchmark: {metadata.name}")
+print(f"Description: {metadata.description}")
+print(f"Subsets: {list(metadata.subsets.keys())}")
+```
+
+```python
+# Get HuggingFace dataset info
+from auto_benchmarkcard import hf_dataset_metadata
+
+hf_data = hf_dataset_metadata.func("nyu-mll/glue")
+print(hf_data.get("readme_markdown", "")[:500])
+```
+
+```python
+# Use RAG retriever for custom evidence search
+from auto_benchmarkcard import RAGRetriever, MetadataIndexer
+from langchain_core.documents import Document
+
+# Create retriever (works standalone without full config)
+retriever = RAGRetriever(
+    embedding_model="minilm",
+    enable_llm_reranking=False,  # Disable to avoid needing LLM config
+    top_k=5,
+)
+
+# Index your own documents
+docs = [Document(page_content="GLUE is a benchmark for NLU tasks.")]
+retriever.index_documents(docs)
+
+# Search
+results = retriever.retrieve("What is GLUE?")
+```
+
+### Provenance Tracking
+
+The composer tool tracks the source of each generated field in the benchmark card. Provenance information is saved separately to `tool_output/composer/provenance_<name>.json`, mapping each field to its source (paper, huggingface, unitxt) and the exact evidence used.
+
 ---
 
 ## Output Files

@@ -969,11 +969,16 @@ def run_factreasoner(state: GraphState):
         risk_card_src = state.get("risk_enhanced_card") or state.get("composed_card") or {}
         clean_card = extract_card(risk_card_src)
 
+        # Extract provenance from composed card to allow provenance-aware flagging
+        composed_card_data = state.get("composed_card", {})
+        provenance_data = composed_card_data.get("provenance") if isinstance(composed_card_data, dict) else None
+
         field_analysis = factuality_results.get("field_analysis", {})
         flagged_card = flag_benchmark_card_fields(
             benchmark_card=clean_card,
             field_analysis=field_analysis,
             threshold=Config.DEFAULT_FACTUALITY_THRESHOLD,
+            provenance=provenance_data,
         )
 
         # Add missing_fields section
