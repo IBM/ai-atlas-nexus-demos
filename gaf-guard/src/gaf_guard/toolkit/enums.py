@@ -11,8 +11,8 @@ class CustomStrEnum(StrEnum):
 
 class MessageType(CustomStrEnum):
     # Client message types
-    GAF_GUARD_INPUT = auto()
-    GAF_GUARD_RESPONSE = auto()
+    CLIENT_INPUT = auto()
+    CLIENT_RESPONSE = auto()
 
     # Server message types
     GAF_GUARD_WF_STARTED = auto()

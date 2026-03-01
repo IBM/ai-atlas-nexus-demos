@@ -46,11 +46,6 @@ st.markdown(
       position: fixed;
       bottom: 3rem;
     }}
-.st-key-sidebar_bottom {
-        position: absolute;
-        bottom: 20px;
-        right: 5px;
-    }
 .block-container {
     padding-top: 1rem;
     padding-bottom: 0rem;
@@ -80,7 +75,12 @@ run_configs = {
     "DriftMonitoringAgent": {
         "drift_monitoring_cot": os.path.join(
             GAF_GUARD_ROOT, "chain_of_thought", "drift_monitoring.json"
-        )
+        ),
+        "drift_threshold": (
+            st.session_state.drift_threshold
+            if "drift_threshold" in st.session_state
+            else 8
+        ),
     },
 }
 resolve_file_paths(run_configs)
@@ -100,42 +100,75 @@ def file_uploaded():
     render(message, simulate=True)
 
 
+def play_button(adapter_type):
+    if st.session_state.setdefault(
+        "stream_adaptor",
+        get_adapter(
+            adapter_type,
+            config={"byte_data": st.session_state.prompt_file},
+        ),
+    ):
+        st.session_state.stream_status = StreamStatus.ACTIVE
+    else:
+        st.write("Selected adaptor is not available.")
+
+
+def pause_button():
+    st.session_state.stream_status = StreamStatus.PAUSED
+    st.session_state.messages.append(
+        WorkflowMessage(
+            name="GAF Guard Client",
+            type=MessageType.GAF_GUARD_QUERY,
+            role=Role.SYSTEM,
+            content=f"**:red[Alert:]** Current input stream is paused. Please click on **Start** to resume.",
+            accept=UserInputType.INPUT_PROMPT,
+            run_configs=run_configs,
+        )
+    )
+
+
+@st.fragment
+def pause_fragment(adapter_type):
+    st.button(
+        "⏸️  Pause",
+        use_container_width=True,
+        disabled=(
+            adapter_type == "Select"
+            or st.session_state.stream_status
+            in [StreamStatus.STOPPED, StreamStatus.PAUSED]
+        ),
+        on_click=pause_button,
+    )
+
+
 def add_sidebar():
 
-    def update_settings(input_drift_threshold):
-        st.session_state.drift_threshold = input_drift_threshold
-
     with st.sidebar:
-        if st.session_state.sidebar_display == "settings":
-            st.sidebar.title("⚙️ Settings")
-            option = st.selectbox(
+        st.sidebar.title("⚙️ Settings")
+        if st.session_state.sidebar_display in ["settings_view", "input_prompt_source"]:
+            st.subheader(f":blue[Taxonomy:] {st.session_state.taxonomy}")
+            st.subheader(f":blue[Drift Threshold:] {st.session_state.drift_threshold}")
+        if st.session_state.sidebar_display == "settings_edit":
+            st.session_state.taxonomy = st.selectbox(
                 "Risk Taxonomy",
                 ("IBM Risk Atlas"),
             )
-            input_drift_threshold = st.slider(
+            st.session_state.drift_threshold = st.slider(
                 "Drift Threshold",
                 value=st.session_state.drift_threshold,
                 min_value=2,
                 max_value=10,
                 step=1,
             )
-            st.button(
-                "Apply",
-                type="primary",
-                on_click=update_settings,
-                args=(input_drift_threshold,),
-            )
-
-        elif st.session_state.sidebar_display == "input_prompt_source":
+        if st.session_state.sidebar_display == "input_prompt_source":
             st.sidebar.title("⚙️ Streaming Source")
-
             adapter_type = st.selectbox(
                 "Select Input Prompt Source",
                 ["Select", "JSON"],
                 help="Choose your streaming source",
                 index=0,
+                disabled="stream_adaptor" in st.session_state,
             )
-
             if adapter_type == "JSON":
                 st.subheader("JSON File Source")
                 st.file_uploader(
@@ -145,12 +178,13 @@ def add_sidebar():
                     label_visibility="collapsed",
                     on_change=file_uploaded,
                     key="prompt_file_uploader",
+                    disabled="stream_adaptor" in st.session_state,
                 )
 
             # Control buttons
             col1, col2 = st.columns(2)
             with col1:
-                if st.button(
+                st.button(
                     "▶️  Start",
                     use_container_width=True,
                     disabled=(
@@ -158,59 +192,33 @@ def add_sidebar():
                         or "prompt_file" not in st.session_state
                         or st.session_state.stream_status == StreamStatus.ACTIVE
                     ),
-                ):
-                    if st.session_state.setdefault(
-                        "stream_adaptor",
-                        get_adapter(
-                            adapter_type,
-                            config={"byte_data": st.session_state.prompt_file},
-                        ),
-                    ):
-                        st.session_state.stream_status = StreamStatus.ACTIVE
-                        st.rerun()
-                    else:
-                        st.write("Selected adaptor is not available.")
-
+                    on_click=play_button,
+                    args=(adapter_type,),
+                )
             with col2:
-                if st.button(
-                    "⏹️  Pause",
-                    use_container_width=True,
-                    disabled=(
-                        adapter_type == "Select"
-                        or st.session_state.stream_status
-                        in [StreamStatus.PAUSED, StreamStatus.STOPPED]
-                    ),
-                ):
-                    st.session_state.stream_status = StreamStatus.PAUSED
-                    st.session_state.messages.append(
-                        WorkflowMessage(
-                            name="GAF Guard Client",
-                            type=MessageType.GAF_GUARD_QUERY,
-                            role=Role.SYSTEM,
-                            content="**Alert:** Input streaming is paused.",
-                            accept=UserInputType.INPUT_PROMPT,
-                        )
-                    )
-                    st.rerun()
+                pause_fragment(adapter_type)
+            st.markdown(
+                "**Note:** Pause button will temporarily halt the stream after processing the current prompt."
+            )
 
         st.divider()
-        st.markdown(":blue[Powered by:]")
-        st.link_button(
+        ai_atlas_button = st.container(
+            horizontal_alignment="center", vertical_alignment="bottom", height="stretch"
+        )
+        ai_atlas_button.markdown(":blue[Powered by:]", text_alignment="center")
+        ai_atlas_button.link_button(
             "AI Atlas Nexus",
             "https://github.com/IBM/ai-atlas-nexus",
             icon=":material/thumb_up:",
             type="secondary",
         )
-
-    if hasattr(st.session_state, "client_session"):
-        with st.sidebar.container(key="sidebar_bottom"):
-            st.markdown(
+        if hasattr(st.session_state, "client_session"):
+            ai_atlas_button.markdown(
                 f"Client Id: {str(st.session_state.client_session._session.id)[0:13]} \n :violet-badge[:material/rocket_launch: Connected to :yellow[GAF Guard] Server:] :orange-badge[:material/check: {st.session_state.host}:{st.session_state.port}]",
                 text_alignment="center",
             )
-    else:
-        with st.sidebar.container(key="sidebar_bottom"):
-            st.markdown(
+        else:
+            ai_atlas_button.markdown(
                 f":red-badge[:material/mimo_disconnect: Client Disconnected]",
                 text_alignment="center",
             )
@@ -251,6 +259,8 @@ def render(message: WorkflowMessage, simulate=False):
                 st.session_state.sidebar_display = "input_prompt_source"
                 st.session_state.disabled_input = True
 
+    if not message.display:
+        return False
     if message.type == MessageType.GAF_GUARD_WF_STARTED:
         return False
     if message.type == MessageType.GAF_GUARD_WF_COMPLETED:
@@ -258,17 +268,18 @@ def render(message: WorkflowMessage, simulate=False):
     elif message.type == MessageType.GAF_GUARD_STEP_STARTED:
         simulate_agent_response(
             role=message.role.value,
-            message=f"##### :blue[Workflow Step:] **{message.name}** STARTED",
+            message=f"##### :blue[Workflow Step:] **{message.name}**",
             simulate=simulate,
             accept=message.accept,
         )
     elif message.type == MessageType.GAF_GUARD_STEP_COMPLETED:
-        simulate_agent_response(
-            role=message.role.value,
-            message=f"##### :blue[Workflow Step:] **{message.name}** COMPLETED",
-            simulate=simulate,
-            accept=message.accept,
-        )
+        # simulate_agent_response(
+        #     role=message.role.value,
+        #     message=f"##### :blue[Workflow Step:] **{message.name}** COMPLETED",
+        #     simulate=simulate,
+        #     accept=message.accept,
+        # )
+        return False
     elif message.type == MessageType.GAF_GUARD_STEP_DATA:
         if isinstance(message.content, dict):
             if message.name == "Input Prompt":
@@ -450,11 +461,11 @@ def connect():
         st.session_state.drift_threshold = 8
         st.session_state.disabled_input = False
         st.session_state.stream_status = StreamStatus.STOPPED
-        st.session_state.sidebar_display = "settings"
+        st.session_state.sidebar_display = "settings_edit"
         st.session_state.messages = [
             WorkflowMessage(
                 name="GAF Guard Client",
-                type=MessageType.GAF_GUARD_INPUT,
+                type=MessageType.CLIENT_INPUT,
                 role=Role.USER,
                 accept=UserInputType.USER_INTENT,
                 run_configs=run_configs,
@@ -487,11 +498,15 @@ def connect():
     st.rerun()
 
 
+def submit_input():
+    st.session_state.sidebar_display = "settings_view"
+
+
 async def app():
 
-    run_configs["DriftMonitoringAgent"][
-        "drift_threshold"
-    ] = st.session_state.drift_threshold
+    # run_configs["DriftMonitoringAgent"][
+    #     "drift_threshold"
+    # ] = st.session_state.drift_threshold
 
     st.title(f":yellow[GAF Guard]", text_alignment="center")
     st.subheader(
@@ -503,9 +518,9 @@ async def app():
     # add sidebar and related components
     add_sidebar()
 
-    message_container = st.container(height="stretch")
-    with message_container:
-        st.info("No messages yet. Start streaming to see data.")
+    # message_container = st.container(height="stretch")
+    # with message_container:
+    #     st.info("No messages yet. Start streaming to see data.")
 
     # Display chat messages from history
     for message in st.session_state.messages:
@@ -513,81 +528,78 @@ async def app():
 
     last_message: WorkflowMessage = st.session_state.messages[-1]
 
-    async with st.session_state.client_session:
-
-        if st.session_state.stream_status == StreamStatus.ACTIVE:
-            user_input = st.session_state.stream_adaptor.next()
-            if not user_input:
-                del st.session_state["stream_adaptor"]
-                st.session_state.stream_status = StreamStatus.STOPPED
-                st.rerun()
-        else:
-            # Accept user input
-            user_input = st.chat_input(
-                placeholder="Enter your response here",
-                key="user_input",
-                disabled=st.session_state.disabled_input,
-            )
-
+    if st.session_state.stream_status == StreamStatus.ACTIVE:
+        user_input = st.session_state.stream_adaptor.next()
         if not user_input:
-            st.stop()
-        else:
-            COMPLETED = False
-            while True:
-                async for event in st.session_state.client_session.run_stream(
-                    agent="orchestrator",
-                    input=[
-                        Message(
-                            parts=[
-                                MessagePart(
-                                    content=WorkflowMessage(
-                                        name="GAF Guard Client",
-                                        type=(
-                                            MessageType.GAF_GUARD_RESPONSE
-                                            if last_message.type
-                                            == MessageType.GAF_GUARD_QUERY
-                                            else MessageType.GAF_GUARD_INPUT
-                                        ),
-                                        role=Role.USER,
-                                        content={last_message.accept: user_input},
-                                        run_configs=run_configs,
-                                    ).model_dump_json(),
-                                    content_type="text/plain",
-                                )
-                            ]
+            del st.session_state["stream_adaptor"]
+            st.session_state.stream_status = StreamStatus.STOPPED
+            st.session_state.messages.append(
+                WorkflowMessage(
+                    name="GAF Guard Client",
+                    type=MessageType.GAF_GUARD_QUERY,
+                    role=Role.SYSTEM,
+                    content=f"**The streaming input has ended. Please choose a streaming source and start again.**",
+                    accept=UserInputType.INPUT_PROMPT,
+                    run_configs=run_configs,
+                )
+            )
+            st.rerun()
+    else:
+        # Accept user input
+        user_input = st.chat_input(
+            placeholder="Enter your response here",
+            key="user_input",
+            disabled=st.session_state.disabled_input,
+            on_submit=submit_input,
+        )
+
+    if not user_input:
+        st.stop()
+    else:
+        COMPLETED = False
+        async for event in st.session_state.client_session.run_stream(
+            agent="orchestrator",
+            input=[
+                Message(
+                    parts=[
+                        MessagePart(
+                            content=WorkflowMessage(
+                                name="GAF Guard Client",
+                                type=(
+                                    MessageType.CLIENT_RESPONSE
+                                    if last_message.type == MessageType.GAF_GUARD_QUERY
+                                    else MessageType.CLIENT_INPUT
+                                ),
+                                role=Role.USER,
+                                content={last_message.accept: user_input},
+                                run_configs=run_configs,
+                            ).model_dump_json(),
+                            content_type="text/plain",
                         )
-                    ],
-                ):
-                    if event.type == "message.part":
-                        message = WorkflowMessage(**json.loads(event.part.content))
-                        if render(message, simulate=True):
-                            st.session_state.messages.append(message)
-                    elif event.type == "run.awaiting":
-                        if hasattr(event, "run"):
-                            message = WorkflowMessage(
-                                **json.loads(
-                                    event.run.await_request.message.parts[0].content
-                                )
-                            )
-                            if message.accept == UserInputType.INPUT_PROMPT:
-                                if (
-                                    st.session_state.stream_status
-                                    == StreamStatus.STOPPED
-                                ):
-                                    render(message, simulate=True)
-                                st.session_state.messages.append(message)
-                            else:
-                                render(message, simulate=True)
-                                st.session_state.messages.append(message)
+                    ]
+                )
+            ],
+        ):
+            if event.type == "message.part":
+                message = WorkflowMessage(**json.loads(event.part.content))
+                if render(message, simulate=True):
+                    st.session_state.messages.append(message)
+            elif event.type == "run.awaiting":
+                if hasattr(event, "run"):
+                    message = WorkflowMessage(
+                        **json.loads(event.run.await_request.message.parts[0].content)
+                    )
+                    if message.accept == UserInputType.INPUT_PROMPT:
+                        if st.session_state.stream_status == StreamStatus.STOPPED:
+                            render(message, simulate=True)
+                        else:
+                            message.display = False
+                    else:
+                        render(message, simulate=True)
 
-                            st.session_state.disabled_input = True
-                            st.rerun()
-
-                    elif event.type == "run.completed":
-                        COMPLETED = True
-
-                if COMPLETED:
-                    break
+                    st.session_state.messages.append(message)
+                    st.session_state.disabled_input = True
+                    st.rerun()
 
 
 if hasattr(st.session_state, "client_session"):

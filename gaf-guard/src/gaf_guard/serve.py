@@ -88,13 +88,13 @@ async def orchestrator(
                 "trial_name": f"Trial_{datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}",
                 "recursion_limit": 100,
                 "run_id": str(uuid.uuid4()),
-                "run_name": f"GAF-Guard-UserIntent",
+                "run_name": f"GAF-Guard-Session={context.session.id}",
                 "configurable": {"thread_id": context.session.id} | RUN_CONFIGS,
             },
         )
-        if message.type == MessageType.GAF_GUARD_RESPONSE:
+        if message.type == MessageType.CLIENT_RESPONSE:
             state_dict = Command(resume=message.content)
-        elif message.type == MessageType.GAF_GUARD_INPUT:
+        elif message.type == MessageType.CLIENT_INPUT:
             state_dict = message.content
         else:
             raise Exception(

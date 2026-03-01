@@ -14,3 +14,4 @@ class WorkflowMessage(BaseModel):
     content: Optional[Any] = None
     accept: Optional[UserInputType] = None
     run_configs: Optional[Dict] = None
+    display: Optional[bool] = True
