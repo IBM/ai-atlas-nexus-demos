@@ -1,4 +1,5 @@
 import operator
+import os
 import re
 from functools import partial
 from typing import Annotated, Any, Dict, List, Optional
@@ -65,7 +66,7 @@ def assess_guardrail(
         dynamic_risks_low.pop(dynamic_risks_low.index(risk))
 
     model = OllamaModel(
-        model="llama3.2", base_url="http://localhost:11434", temperature=0
+        model="llama3.2", base_url=os.environ["OLLAMA_API_URL"], temperature=0
     )
 
     # toxicity_guard = ToxicityGuard(model=model)
