@@ -43,8 +43,7 @@ dependencies = [
     "pre-commit",
     "uvicorn==0.35.0",
     "streamlit",
-    "deepteam",
-    "chardet==5.2.0"
+    "deepteam" 
 ]
 
 [project.optional-dependencies]
