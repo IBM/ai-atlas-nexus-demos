@@ -1,0 +1,13 @@
+services:
+  gaf-guard-server:
+    container_name: gaf-guard-server
+    image: dsalwala/gaf-guard-server:darwin-slim # Available latest, slim, darwin-slim, darwin-latest
+    environment:
+      OLLAMA_API_URL: $OLLAMA_API_URL
+      RITS_API_KEY: $RITS_API_KEY
+      RITS_API_URL: $RITS_API_URL
+    volumes:
+      - ./examples/server_configs:/home/user/app/server_configs
+    command: python gaf_guard/redirect.py serve --config server_configs/risk_assessment.yaml --host 0.0.0.0 --port 8000
+    ports:
+      - 8000:8000

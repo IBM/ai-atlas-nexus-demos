@@ -1,4 +1,3 @@
--e .
 acp-sdk==1.0.3
 ai-atlas-nexus
 aiohappyeyeballs==2.6.1
