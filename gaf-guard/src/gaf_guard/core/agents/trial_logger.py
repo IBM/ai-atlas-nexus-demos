@@ -23,9 +23,9 @@ yaml.SafeDumper.add_multi_representer(
 
 # Graph state
 class TrialLoggerAgentState(BaseModel):
-    step_name: str
-    step_role: Role
-    step_type: MessageType
+    name: str
+    role: Role
+    type: MessageType
     content: Any
 
 
@@ -35,6 +35,8 @@ def yaml_serializer(
 ):
     """Serialize Python object to YAML and write to file."""
     trial_name = config.get("metadata", {}).get("trial_name", "Trials_")
+
+    Path(trial_dir).mkdir(parents=True, exist_ok=True)
     file_path = Path(PurePath(trial_dir, trial_name + ".yaml"))
 
     try:
@@ -56,7 +58,10 @@ def json_serializer(
 ):
     """Serialize Python object to JSON string and write to file."""
     trial_name = config.get("metadata", {}).get("trial_name", "Trials_")
+
+    Path(trial_dir).mkdir(parents=True, exist_ok=True)
     file_path = Path(PurePath(trial_dir, trial_name + ".json"))
+
     try:
         if file_path.exists():
             trial_data = json.loads(file_path.read_text())

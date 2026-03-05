@@ -1,20 +1,19 @@
 from functools import partial
 from typing import Dict, List, Optional
 
+from ai_atlas_nexus.blocks.inference import InferenceEngine
+from ai_atlas_nexus.data import load_resource
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
 from rich.console import Console
-from ai_atlas_nexus.blocks.inference import InferenceEngine
-from ai_atlas_nexus.data import load_resource
-from ai_atlas_nexus.library import AIAtlasNexus
 
+from gaf_guard.core import ai_atlas_nexus
 from gaf_guard.core.agents import Agent
 from gaf_guard.core.decorators import workflow_step
 
 
 console = Console()
-ai_atlas_nexus = AIAtlasNexus()
 
 
 # Graph state

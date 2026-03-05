@@ -11,7 +11,7 @@ https://www.youtube.com/watch?v=M4JSkdFg6I0
 
 ## Architecture
 
-<img width="1253" height="753" alt="image" src="https://github.com/user-attachments/assets/ccd17307-4e51-490a-8459-4227e2450664" />
+<img width="757" height="490" alt="image" src="https://github.com/user-attachments/assets/80d279be-9ad5-4196-98a9-d02e2b430431" />
 
 
 ## Agent Communication Protocol (ACP)
@@ -29,14 +29,15 @@ Check out the official repo of [AI Atlas Nexus](https://github.com/IBM/ai-atlas-
 ## Agentic Workflow
 The present agentic workflow is as shown below.
 
-<img width="742" height="2092" alt="output" src="https://github.com/user-attachments/assets/93db9787-ef68-41af-a89b-ad206cb49691" />
+<img width="661" height="2217" alt="output" src="https://github.com/user-attachments/assets/e3e3191a-6ab1-461b-b78d-d215a9518414" />
+
 
 
 ## Documentation
 
 See the [**GAF Guard Wiki**](https://github.com/IBM/ai-atlas-nexus-demos/wiki/GAF-Guard) for full documentation, installation guide, operational details and other information.
 
-## Installation and Running the CLI App
+## Installation and Running the GAF Guard Server
 
 This project targets python version ">=3.11, <3.12". You can download specific versions of python here: https://www.python.org/downloads/
 
@@ -44,26 +45,40 @@ This project targets python version ">=3.11, <3.12". You can download specific v
    ```
    git clone git@github.com:IBM/ai-atlas-nexus-demos.git
    cd ai-atlas-nexus-demos/gaf-guard
-   conda create -n gaf-guard python=3.11
+   conda create -n gaf-guard python=3.12.0
    conda activate gaf-guard
    pip install -e ".[ollama]" # depending on which inference engine to use [ollama, wml, vllm]
    ```
 
-2. Update the config variables and inference engine params in the server config file. Update LLM server (viz. ollama, vllm) credentials in the config file. Example server config is given below.
+2. Update the config variables and inference engine params in the example server config. Update LLM inference (viz. ollama, vllm) credentials in the config file. Example server config is given below.
 
-   - `nano examples/server_configs/risk_assessment.yaml`
+   ```
+   vi examples/server_configs/risk_assessment.yaml
+   ```
 
-3. Create a `.env` file in the root directory by copying `.env.example`, and update it with the required parameters.
+3. Create a `.env` file in the root directory by copying `.env.example`, and update it with the required parameters or alternatively, define the variables from `.env.example` as environment variables.
 
 4. Start the GAF-Guard server
 
-   - `gaf-guard serve examples/server_configs/risk_assessment.yaml`
+   ```
+   gaf-guard serve --config examples/server_configs/risk_assessment.yaml --host localhost --port 8000
+   ```
 
-5. Start the GAF-Guard client
-   - `python apps/cli/client.py --host localhost --port 8000`
+## Running the GAF Guard Client
 
-6. To run benchmark on already logged JSON trajectories. `trails` directory is where all trials are stored.
-   - `python apps/cli/run_benchmark.py --host localhost --port 8000 --trial-dir trials`
+- Streamlit Client: 
+   ```
+   gaf-guard client --type streamlit
+   ```
+
+- CLI Client: 
+   ```
+   gaf-guard client --type cli --host http://localhost --port 8000
+   ```
+
+## Streamlit client demo
+
+https://github.com/user-attachments/assets/0ee21e08-318e-4890-8cb7-d364d3b78abc
 
 ## Referencing the project
 

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Optional
 
 from pydantic import HttpUrl, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -15,9 +16,13 @@ class Configuration(BaseSettings):
         extra="allow",
     )
 
-    GAF_GUARD_HOST: str = "localhost"
-    GAF_GUARD_PORT: int = 8000
-    OLLAMA_API_URL: HttpUrl = HttpUrl("http://localhost:11434")
+    RITS_API_KEY: Optional[str] = ""
+    RITS_API_URL: Optional[str] = ""
+    OLLAMA_API_URL: Optional[str] = ""
+    WML_API_KEY: Optional[str] = ""
+    WML_API_URL: Optional[str] = ""
+    WML_PROJECT_ID: Optional[str] = ""
+    WML_SPACE_ID: Optional[str] = ""
 
 
 @lru_cache

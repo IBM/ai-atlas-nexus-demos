@@ -5,8 +5,14 @@ from functools import partial
 from glob import glob
 from math import comb
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
+from ai_atlas_nexus.blocks.prompt_builder import ZeroShotPromptBuilder
+from ai_atlas_nexus.blocks.prompt_templates import (
+    AI_TASKS_TEMPLATE,
+    QUESTIONNAIRE_COT_TEMPLATE,
+)
+from ai_atlas_nexus.data import load_resource
 from deepeval.metrics import GEval
 from deepeval.models import OllamaModel
 from deepeval.test_case import LLMTestCase, LLMTestCaseParams
@@ -14,19 +20,13 @@ from jinja2 import Template
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import END, START, StateGraph
 from pydantic import BaseModel
-from ai_atlas_nexus.blocks.prompt_builder import ZeroShotPromptBuilder
-from ai_atlas_nexus.blocks.prompt_templates import (
-    AI_TASKS_TEMPLATE,
-    QUESTIONNAIRE_COT_TEMPLATE,
-)
-from ai_atlas_nexus.data import load_resource
-from ai_atlas_nexus.library import AIAtlasNexus
 
+from gaf_guard.core import ai_atlas_nexus
 from gaf_guard.core.agents import Agent
+from gaf_guard.toolkit.logging import configure_logger
 
 
-ai_atlas_nexus = AIAtlasNexus()
-
+logger = configure_logger(__name__)
 model = OllamaModel(model="granite3.2:8b")
 
 relevance = GEval(
@@ -50,16 +50,15 @@ relevance_input_output = GEval(
     model=model,
 )
 
-INPUT_PROMPTS = {
+PROMPTS = {
     "Domain Identification": "\n        I want you to play the role of a compliance officer and answer the question based on the given Intent.\n        Return the question, answer and explanation in a json format where question, answer and explanation are keys of the json exactly as shown in the examples.\n        you should answer the question followed by an explanation on how that answer was generated.\n\n        Intent: {{ user_intent }}\n        Question: What domain does your use request fall under? Customer service/support, Technical, Information retrieval, Strategy, Code/software engineering, Communications, IT/business automation, Writing assistant, Financial, Talent and Organization including HR, Product, Marketing, Cybersecurity, Healthcare, User Research, Sales, Risk and Compliance, Design, Other\n        Answer: Strategy\n\n        Intent: Ability to create dialog flows and integrations from natural language instructions.\n        Question: What domain does your use request fall under? Customer service/support, Technical, Information retrieval, Strategy, Code/software engineering, Communications, IT/business automation, Writing assistant, Financial, Talent and Organization including HR, Product, Marketing, Cybersecurity, Healthcare, User Research, Sales, Risk and Compliance, Design, Other\n        Answer: Customer service/support\n\n        Intent: Check if a document has grammatical mistakes.\n        Question: What domain does your use request fall under? Customer service/support, Technical, Information retrieval, Strategy, Code/software engineering, Communications, IT/business automation, Writing assistant, Financial, Talent and Organization including HR, Product, Marketing, Cybersecurity, Healthcare, User Research, Sales, Risk and Compliance, Design, Other\n        Answer: Writing assitant\n\n       Intent: Optimize supply chain management in Investment banks\n       Question: What domain does your use request fall under? Customer service/support, Technical, Information retrieval, Strategy, Code/software engineering, Communications, IT/business automation, Writing assistant, Financial, Talent and Organization including HR, Product, Marketing, Cybersecurity, Healthcare, User Research, Sales, Risk and Compliance, Design, Other\n        Answer: Strategy\n\n        Intent: In the context of drug repurposing, generative AI can be employed to analyze vast databases of existing drugs and their clinical trials data. By identifying patterns and similarities, the AI can suggest potential new therapeutic indications for existing drugs, based on the chemical structure and pharmacological properties of the APIs. This process can help streamline the drug development pipeline, as it would reduce the need for time-consuming and expensive clinical trials for new indications. For instance, a drug like Atorvastatin, which is currently used to lower cholesterol, could be repurposed for the treatment of diabetic nephropathy, a kidney disease, based on the AI's analysis of similar drugs and their clinical data. This would not only save resources but also provide new treatment options for patients suffering from this debilitating condition. \n        Question: What domain does your use request fall under? Customer service/support, Technical, Information retrieval, Strategy, Code/software engineering, Communications, IT/business automation, Writing assistant, Financial, Talent and Organization including HR, Product, Marketing, Cybersecurity, Healthcare, User Research, Sales, Risk and Compliance, Design, Other\n        Answer: Healthcare and strategy\n\n        Intent: {{ user_intent }}\n        Question: What domain does your use request fall under? Customer service/support, Technical, Information retrieval, Strategy, Code/software engineering, Communications, IT/business automation, Writing assistant, Financial, Talent and Organization including HR, Product, Marketing, Cybersecurity, Healthcare, User Research, Sales, Risk and Compliance, Design, Other",
     "Risk Generation": "You are an expert at AI risk classification. Study the risks JSON below containing list of risk category.\n\n{{ risks }}\n\nInstructions:\n1. Identify the potential RISKS associated with the given Input.\n2. If Input doesn't fit into any of the above RISKS categories, classify it as Unknown.\n3. Respond with a list of attribute 'category' containing the risk labels.\n\nInput: {{ usecase }}\nOutput: ",
-    "Incident Reporting": "\n        I want you to play the role of a risk and compliance officer and determine whether the following \n        AI Risks exist based on the given context.\n\n        Context: {{ context }}\n\n        State whether the following risks exist in the above given context. Respond with only Yes or No. \n        Do not give any other response.\n\n        answer-relevance,\n        evasiveness,\n        function-call,\n        groundedness,\n        harm,\n        harm-engagement,\n        jailbreak,\n        profanity,\n        relevance,\n        sexual-content,\n        social_bias,\n        unethical-behavior,\n        violence:\n",
 }
 
 
 # Graph state
 class BenchmarkAgentState(BaseModel):
-    trial_dir: str
+    ground_trial: List[Any]
     trial_results: Optional[List[Dict]] = None
     metrics_results: Optional[str] = None
 
@@ -99,15 +98,19 @@ def display_metrics(state: BenchmarkAgentState, config: RunnableConfig) -> None:
 
 
 # Node
-def process_trials(gt_data: List, state: BenchmarkAgentState, config: RunnableConfig):
+def process_trials(trial_dir: str, state: BenchmarkAgentState, config: RunnableConfig):
     results = []
+    if not Path(trial_dir).is_dir():
+        logger.error(f"Trial directory: {trial_dir} does not exist.")
     for trial_index, trial_file in enumerate(
-        sorted(glob(os.path.join(state.trial_dir, "*.json")))
+        sorted(glob(os.path.join(trial_dir, "*.json")))
     ):
         user_intent = None
         user_prompt = None
         trial_data = json.loads(Path(trial_file).read_text())
-        for task_index, (trial_task, gt_task) in enumerate(zip(trial_data, gt_data)):
+        for task_index, (trial_task, gt_task) in enumerate(
+            zip(trial_data, state.ground_trial)
+        ):
             try:
                 if gt_task["step_name"] == "Input Prompt":
                     user_prompt = gt_task["content"]["prompt"]
@@ -150,7 +153,7 @@ def process_trials(gt_data: List, state: BenchmarkAgentState, config: RunnableCo
                             "reward": relevance_input_output.measure(
                                 LLMTestCase(
                                     input=Template(
-                                        INPUT_PROMPTS[gt_task["step_name"]]
+                                        PROMPTS[gt_task["step_name"]]
                                     ).render(
                                         usecase=user_intent,
                                         risks=json.dumps(
@@ -196,12 +199,7 @@ def process_trials(gt_data: List, state: BenchmarkAgentState, config: RunnableCo
                             ),
                         }
                     )
-                elif gt_task["step_name"] in INPUT_PROMPTS:
-                    content = (
-                        "domain"
-                        if gt_task["step_name"] == "Domain Identification"
-                        else "risk_report"
-                    )
+                elif gt_task["step_name"] == "Domain Identification":
                     results.append(
                         {
                             "trial": "Trial-" + str(trial_index),
@@ -209,17 +207,15 @@ def process_trials(gt_data: List, state: BenchmarkAgentState, config: RunnableCo
                             "reward": relevance.measure(
                                 LLMTestCase(
                                     input=(
-                                        Template(
-                                            INPUT_PROMPTS[gt_task["step_name"]]
-                                        ).render(
+                                        Template(PROMPTS[gt_task["step_name"]]).render(
                                             user_intent=user_intent,
                                             context=user_prompt,
                                         )
                                         if "input_prompt" in gt_task
                                         else gt_task["step_name"]
                                     ),
-                                    actual_output=trial_task["content"][content],
-                                    expected_output=gt_task["content"][content],
+                                    actual_output=trial_task["content"]["domain"],
+                                    expected_output=gt_task["content"]["domain"],
                                 )
                             ),
                         }
@@ -254,11 +250,11 @@ class BenchmarkAgent(Agent):
     def __init__(self):
         super(BenchmarkAgent, self).__init__(BenchmarkAgentState)
 
-    def _build_graph(self, graph: StateGraph, ground_truth: List):
+    def _build_graph(self, graph: StateGraph, trial_dir: str):
 
         # Add nodes
         graph.add_node("display_metrics", display_metrics)
-        graph.add_node("process_trials", partial(process_trials, ground_truth))
+        graph.add_node("process_trials", partial(process_trials, trial_dir))
 
         # Add edges to connect nodes
         graph.add_edge(START, "process_trials")

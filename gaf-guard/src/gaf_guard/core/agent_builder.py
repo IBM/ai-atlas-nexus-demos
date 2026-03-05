@@ -1,9 +1,9 @@
 import importlib
 from typing import Dict
 
+from ai_atlas_nexus.blocks.inference.params import InferenceEngineCredentials
 from langgraph.checkpoint.memory import MemorySaver
 from rich.console import Console
-from ai_atlas_nexus.blocks.inference.params import InferenceEngineCredentials
 
 from gaf_guard.config import get_configuration
 from gaf_guard.toolkit.logging import configure_logger
@@ -44,10 +44,12 @@ class AgentBuilder:
             return self.compile(param_name, param_value)
         elif isinstance(param_value, str) and param_value.startswith("$"):
             try:
-                param_value = str(getattr(config, param_value[1:]))
+                actual_param_value = str(getattr(config, param_value[1:]))
+                if actual_param_value == "":
+                    raise ()
             except:
                 raise Exception(f"Env variable {param_value[1:]} not set.")
-            return param_value
+            return actual_param_value
         else:
             return param_value
 
