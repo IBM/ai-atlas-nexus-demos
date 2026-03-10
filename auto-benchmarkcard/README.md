@@ -41,6 +41,7 @@ Each component acts as a "worker" in the LangGraph workflow, with graph state up
 
 ### Composer Tool
 - Uses an LLM to generate structured BenchmarkCards from available data
+- Defaults to **DeepSeek V3.2** for high-quality synthesis (see [LLM Configuration](#llm-configuration))
 
 ### AI Atlas Nexus Tool
 - Maps benchmarks to AI risk categories using IBM Risk Atlas
@@ -119,6 +120,29 @@ Set `LLM_ENGINE_TYPE` in `config.py` to switch between engines.
 RITS_API_KEY=<RITS_API_KEY>
 RITS_MODEL=<YOUR_MODEL>
 RITS_API_URL=<RITS_API_URL>
+```
+
+---
+
+## LLM Configuration
+
+The pipeline uses a **tiered model strategy** — different tasks are assigned to models of appropriate size:
+
+| Task | Model | Reason |
+|------|-------|--------|
+| Benchmark card composition | **DeepSeek V3.2** (default) | Requires strong instruction-following, source synthesis, and zero fabrication |
+| RAG reranking & query reformulation | **Granite 3.3 8B** (default) | Simple relevance scoring — a small model is sufficient and much faster |
+| Atomization (claim extraction) | **Granite 3.3 8B** | Structured extraction task, no generation creativity needed |
+| FactReasoner (NLI/entailment) | **Llama 3.3 70B** | Hardcoded in the FactReasoner library config |
+
+**Why DeepSeek V3.2 for composition?**
+Earlier versions used Llama 3.3 70B, which required extensive prompt guardrails to prevent fabrication and off-topic generation. DeepSeek V3.2 follows complex multi-source instructions more reliably, produces richer paper-grounded content, and requires a much simpler prompt — reducing both maintenance overhead and failure modes.
+
+**Changing the models:**
+Set these environment variables in your `.env` file to override the defaults:
+```bash
+RITS_COMPOSER_MODEL=deepseek-ai/DeepSeek-V3.2
+RITS_LIGHT_MODEL=ibm-granite/granite-3.3-8b-instruct
 ```
 
 Install the package:

@@ -826,15 +826,18 @@ def run_rag(state: GraphState) -> Dict[str, Any]:
         documents = indexer.create_documents(unitxt_data, hf_data, state["query"], docling_data)
         # Documents created count removed
 
-        # Initialize enhanced RAG retriever
+        # Initialize enhanced RAG retriever with lightweight model for reranking/reformulation
+        from auto_benchmarkcard.config import get_light_llm_handler
+
         try:
+            light_llm = get_light_llm_handler()
             retriever = RAGRetriever(
                 embedding_model=Config.DEFAULT_EMBEDDING_MODEL,
                 enable_llm_reranking=Config.ENABLE_LLM_RERANKING,
                 enable_hybrid_search=Config.ENABLE_HYBRID_SEARCH,
                 enable_query_expansion=Config.ENABLE_QUERY_EXPANSION,
+                llm_handler=light_llm,
             )
-            # RAG retriever ready message removed
         except Exception as e:
             logger.warning(f"Enhanced retriever failed: {e}")
             logger.info("Using basic retriever fallback")
@@ -853,9 +856,12 @@ def run_rag(state: GraphState) -> Dict[str, Any]:
         if "benchmark_card" in benchmark_card:
             benchmark_card = benchmark_card["benchmark_card"]
 
-        # Break card into atomic statements
-        # Atomizing message removed
-        statements = atomize_benchmark_card(benchmark_card, "all")
+        # Break card into atomic statements (lightweight model suffices)
+        statements = atomize_benchmark_card(
+            benchmark_card, "all",
+            engine_type=Config.LLM_ENGINE_TYPE,
+            model_name=Config.LIGHT_MODEL,
+        )
         # Statements extracted count removed
 
         # Extract statement texts for batch processing
@@ -949,10 +955,10 @@ def run_factreasoner(state: GraphState):
 
         # Evaluation progress message removed
 
-        # Run factuality evaluation
+        # Run factuality evaluation (uses its own FactReasoner-library LLM config)
         factuality_results = evaluate_factuality(
             formatted_rag_results=rag_results,
-            model=Config.DEFAULT_MODEL,
+            model=Config.FACTREASONER_MODEL,
             cache_dir=Config.FACTREASONER_CACHE_DIR,
             merlin_path=str(Config.MERLIN_BIN),
             debug_mode=False,
@@ -1240,6 +1246,8 @@ def main() -> None:
                         args.enable_llm_reranking, args.enable_hybrid_search, args.enable_query_expansion,
                         args.parent_chunk_size, args.child_chunk_size, args.factuality_threshold, args.top_k)
 
+        logger.info("Models — composer: %s | light: %s | factreasoner: %s",
+                    Config.COMPOSER_MODEL, Config.LIGHT_MODEL, Config.FACTREASONER_MODEL)
         logger.debug("Starting metadata extraction for: '%s'", args.query)
         if args.catalog:
             logger.debug("Using custom catalog: %s", args.catalog)
