@@ -20,10 +20,17 @@ class Config:
     FACTREASONER_DIR: Path = EXTERNAL_DIR / "FactReasoner"
     MERLIN_BIN: Path = EXTERNAL_DIR / "merlin" / "bin" / "merlin"
 
-    # LLM Configuration
-    DEFAULT_MODEL: str = "llama-3.3-70b-instruct" # for ollama gemma3:12b
+    # LLM Configuration — tiered models for different task complexities
+    COMPOSER_MODEL: str = os.getenv(
+        "RITS_COMPOSER_MODEL", "deepseek-ai/DeepSeek-V3.2"
+    )
+    LIGHT_MODEL: str = os.getenv(
+        "RITS_LIGHT_MODEL", "ibm-granite/granite-3.3-8b-instruct"
+    )
+    FACTREASONER_MODEL: str = "llama-3.3-70b-instruct"  # must match FactReasoner models.yaml key
+    DEFAULT_MODEL: str = FACTREASONER_MODEL  # backward compat
     DEFAULT_EMBEDDING_MODEL: str = "bge-large"
-    LLM_ENGINE_TYPE: str = "rits" #or ollama, vllm
+    LLM_ENGINE_TYPE: str = "rits"  # or ollama, vllm
 
     # Processing Configuration
     DEFAULT_FACTUALITY_THRESHOLD: float = 0.8
@@ -81,27 +88,64 @@ class Config:
             raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
 
 
-def get_llm_handler():
-    """Get or create LLM handler instance (lazy initialization).
+_llm_cache: dict = {}
+
+
+def get_llm_handler(model_name: Optional[str] = None):
+    """Get or create a cached LLM handler for the given model.
+
+    Args:
+        model_name: Model identifier (defaults to COMPOSER_MODEL).
 
     Returns:
-        LLMHandler: Initialized LLM handler
-
-    Raises:
-        RuntimeError: If handler initialization fails
+        LLMHandler: Initialized LLM handler for the requested model.
     """
+    import logging
+
     from auto_benchmarkcard.llm_handler import LLMHandler
 
-    if not hasattr(get_llm_handler, "_instance"):
+    _log = logging.getLogger(__name__)
+
+    key = model_name or Config.COMPOSER_MODEL
+    if key not in _llm_cache:
         try:
-            get_llm_handler._instance = LLMHandler(
+            _log.info("Initializing LLM handler: %s", key)
+            _llm_cache[key] = LLMHandler(
                 engine_type=Config.LLM_ENGINE_TYPE,
-                verbose=False  # Disable progress bars for cleaner output
+                model_name=key,
+                verbose=False,
             )
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize LLM handler: {e}") from e
-    return get_llm_handler._instance
+            raise RuntimeError(f"Failed to initialize LLM handler ({key}): {e}") from e
+    return _llm_cache[key]
 
 
-# Backward compatibility
-LLM = get_llm_handler()
+def get_light_llm_handler():
+    """Get the lightweight model handler (for reranking, reformulation, atomization).
+
+    Falls back to the composer model if the light model endpoint is unreachable.
+    """
+    import logging
+
+    _log = logging.getLogger(__name__)
+    try:
+        return get_llm_handler(Config.LIGHT_MODEL)
+    except RuntimeError:
+        _log.warning(
+            "Light model %s unavailable, falling back to composer model",
+            Config.LIGHT_MODEL,
+        )
+        return get_llm_handler(Config.COMPOSER_MODEL)
+
+
+class _LazyLLM:
+    """Lazy proxy so importing config doesn't immediately connect to the LLM endpoint."""
+
+    def __getattr__(self, name):
+        global LLM
+        LLM = get_llm_handler()
+        return getattr(LLM, name)
+
+
+# Backward compatibility — default LLM is the composer (heavy) model, initialized lazily
+LLM = _LazyLLM()

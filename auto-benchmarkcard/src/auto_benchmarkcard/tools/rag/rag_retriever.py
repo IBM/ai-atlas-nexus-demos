@@ -71,8 +71,24 @@ class RAGRetriever:
         enable_llm_reranking: bool = True,
         enable_hybrid_search: bool = True,
         enable_query_expansion: bool = True,
+        llm_handler: Optional[Any] = None,
+        parent_chunk_size: int = 2048,
+        child_chunk_size: int = 512,
+        top_k: int = 3,
     ):
+        """Initialize RAG retriever.
 
+        Args:
+            persist_directory: Optional path to store vector database
+            embedding_model: "bge-large", "e5-large", or "minilm"
+            enable_llm_reranking: Use LLM to score and filter results
+            enable_hybrid_search: Combine vector search with BM25
+            enable_query_expansion: Reformulate queries with LLM
+            llm_handler: Optional LLM handler for reranking/expansion (uses config default if None)
+            parent_chunk_size: Size of parent chunks for hierarchical chunking
+            child_chunk_size: Size of child chunks for precise retrieval
+            top_k: Number of results to return per query
+        """
         self.embedding_model = embedding_model
         self.embeddings = self._initialize_embeddings(embedding_model)
 
@@ -83,13 +99,19 @@ class RAGRetriever:
         self.enable_hybrid_search = enable_hybrid_search
         self.enable_query_expansion = enable_query_expansion
 
+        # Chunk size configuration (allows standalone use without Config)
+        self.parent_chunk_size = parent_chunk_size
+        self.child_chunk_size = child_chunk_size
+        self.top_k = top_k
+
         # BM25 components for hybrid search
         self.bm25_index = None
         self.documents_for_bm25 = []
 
-        # LLM handler for query expansion and reranking - use default from config
-        self.llm_handler = None
-        if enable_llm_reranking or enable_query_expansion:
+        # LLM handler for query expansion and reranking
+        # Supports dependency injection or falls back to config
+        self.llm_handler = llm_handler
+        if self.llm_handler is None and (enable_llm_reranking or enable_query_expansion):
             try:
                 from auto_benchmarkcard.config import get_llm_handler
                 self.llm_handler = get_llm_handler()
@@ -139,10 +161,9 @@ class RAGRetriever:
         Returns:
             List of chunked documents with parent-child relationships in metadata.
         """
-        # Get chunk sizes from configuration
-        from auto_benchmarkcard.config import Config
-        parent_size = Config.PARENT_CHUNK_SIZE
-        child_size = Config.CHILD_CHUNK_SIZE
+        # Use instance chunk sizes (allows standalone use without Config)
+        parent_size = self.parent_chunk_size
+        child_size = self.child_chunk_size
 
         # Calculate overlaps (~10% of chunk size)
         parent_overlap = int(parent_size * 0.1)
@@ -303,10 +324,9 @@ class RAGRetriever:
         self._build_bm25_index(documents)
 
         # Configure retriever with MMR for diversity
-        from auto_benchmarkcard.config import Config
         # If LLM reranking enabled, fetch more candidates for the LLM to filter
         # Otherwise just fetch top-k directly
-        k_value = Config.DEFAULT_TOP_K * 3 if self.enable_llm_reranking else Config.DEFAULT_TOP_K
+        k_value = self.top_k * 3 if self.enable_llm_reranking else self.top_k
         self.retriever = self.vectorstore.as_retriever(
             search_type="mmr",
             search_kwargs={

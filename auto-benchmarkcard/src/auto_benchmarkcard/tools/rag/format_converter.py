@@ -1,8 +1,55 @@
 import json
 import logging
+import re
 from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
+
+
+# Tag patterns commonly found in HuggingFace/UnitXT metadata that NLI models
+# struggle to match against natural-language atoms.
+_TAG_EXPANSIONS = {
+    r"\blanguage:\s*en\b": "language: English",
+    r"\blanguage:\s*de\b": "language: German",
+    r"\blanguage:\s*fr\b": "language: French",
+    r"\blanguage:\s*es\b": "language: Spanish",
+    r"\blanguage:\s*zh\b": "language: Chinese",
+    r"\blanguage:\s*ja\b": "language: Japanese",
+    r"\blanguage:\s*ar\b": "language: Arabic",
+    r"\bformat:\s*parquet\b": "data format: parquet",
+    r"\bformat:\s*csv\b": "data format: CSV",
+    r"\bformat:\s*json\b": "data format: JSON",
+    r"\bformat:\s*jsonl\b": "data format: JSONL",
+    r"\bmodality:\s*text\b": "data modality: text",
+    r"\bmodality:\s*tabular\b": "data modality: tabular",
+    r"\bmodality:\s*image\b": "data modality: image",
+    r"\btask_categories:\s*": "task category: ",
+    r"\btask_ids:\s*": "task: ",
+    r"\bsize_categories:\s*": "dataset size category: ",
+    r"\bsource_datasets:\s*": "source dataset: ",
+    r"\bmultilinguality:\s*monolingual\b": "the dataset is monolingual",
+    r"\bmultilinguality:\s*multilingual\b": "the dataset is multilingual",
+}
+
+
+def normalize_context_for_nli(text: str) -> str:
+    """Expand shorthand tag notation into natural language for better NLI matching.
+
+    HuggingFace and UnitXT metadata uses compact tag syntax (e.g. ``language:en``,
+    ``format:parquet``) that NLI models cannot reliably align with natural-language
+    claims like "The benchmark is in English".  This function rewrites the most
+    common patterns so that the NLI premise/hypothesis comparison works.
+
+    Args:
+        text: Raw context text, possibly containing tag-style notation.
+
+    Returns:
+        Text with tag patterns expanded to natural language equivalents.
+    """
+    normalized = text
+    for pattern, replacement in _TAG_EXPANSIONS.items():
+        normalized = re.sub(pattern, replacement, normalized, flags=re.IGNORECASE)
+    return normalized
 
 
 def generate_output_from_benchmark_card(benchmark_card: Dict[str, Any], field: str) -> str:
@@ -121,12 +168,15 @@ def convert_rag_to_required_format(
             context_id = f"c_{atom_id}_{chunk_idx}"
             context_ids.append(context_id)
 
-            # Add to contexts array
+            # Normalize tag-style notation for better NLI matching
+            raw_text = chunk.get("content", "")
+            normalized_text = normalize_context_for_nli(raw_text)
+
             output["contexts"].append(
                 {
                     "id": context_id,
                     "title": benchmark_name,
-                    "text": chunk.get("content", ""),
+                    "text": normalized_text,
                 }
             )
 
