@@ -189,7 +189,7 @@ def start_server(config_file: Dict, host: str = "localhost", port: int = 8000):
     )
 
     LOGGER.info(
-        f"Server ver-{gaf_guard.__version__} initialized. Listening at {host}:{port}. To exit press CTRL+C"
+        f"Server v{gaf_guard.__version__} initialized. Listening at {host}:{port}. To exit press CTRL+C"
     )
     server.run(
         host=host,

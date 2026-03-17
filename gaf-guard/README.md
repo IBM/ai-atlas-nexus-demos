@@ -39,29 +39,36 @@ See the [**GAF Guard Wiki**](https://github.com/IBM/ai-atlas-nexus-demos/wiki/GA
 
 ## Installation and Running the GAF Guard Server
 
-This project targets python version ">=3.11, <3.12". You can download specific versions of python here: https://www.python.org/downloads/
-
-1. Set up `conda` or any python virtual environment and install GAF-Guard
+1. Clone GAF Guard from `ai-atlas-nexus-demos`.
    ```
    git clone git@github.com:IBM/ai-atlas-nexus-demos.git
    cd ai-atlas-nexus-demos/gaf-guard
-   conda create -n gaf-guard python=3.12.0
-   conda activate gaf-guard
+   ```
+
+2. Set up your desired python virtual environment and install GAF-Guard. This project targets python version ">=3.11, <3.12". You can download specific versions of python here: https://www.python.org/downloads/
+   ```
    pip install -e ".[ollama]" # depending on which inference engine to use [ollama, wml, vllm]
    ```
 
-2. Update the config variables and inference engine params in the example server config. Update LLM inference (viz. ollama, vllm) credentials in the config file. Example server config is given below.
+3. Update the config variables and inference engine params in the example server config. Update LLM inference (viz. ollama, vllm) services in the config file. Example server config is given below.
 
    ```
    vi examples/server_configs/risk_assessment.yaml
    ```
 
-3. Create a `.env` file in the root directory by copying `.env.example`, and update it with the required parameters or alternatively, define the variables from `.env.example` as environment variables.
+   - In the next step, you will define the LLM credentials as environment variables or `.env` file.
 
-4. Start the GAF-Guard server
+4. Create a `.env` file in the root directory by copying `.env.example`, and update it with the required parameters or alternatively, define the variables from `.env.example` as environment variables.
+
+5. Start the GAF-Guard server. Select the server host and port according to your preferences.
 
    ```
    gaf-guard serve --config examples/server_configs/risk_assessment.yaml --host localhost --port 8000
+   ```
+
+   -  Make sure you see the following message in the terminal.
+   ```
+   [2026-03-16 14:45:48:224] - INFO - GAF Guard - Server v1.0.0 initialized. Listening at localhost:8000. To exit press CTRL+C
    ```
 
 ## Running the GAF Guard Client
@@ -70,6 +77,8 @@ This project targets python version ">=3.11, <3.12". You can download specific v
    ```
    gaf-guard client --type streamlit
    ```
+
+   - On the streamlit UI connect screen, enter server host address and port used to start the GAF-Guard server. You can find this information in the server logs.
 
 - CLI Client: 
    ```

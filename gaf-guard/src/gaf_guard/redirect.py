@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 import subprocess
-import sys
+from pathlib import Path
 from typing import Annotated
 
 import typer
@@ -17,6 +17,7 @@ httpx_logger = logging.getLogger("httpx")
 httpx_logger.setLevel(logging.ERROR)
 
 LOGGER = configure_logger(__name__)
+PACKAGEDIR = Path(__file__).parent.absolute()
 
 app = typer.Typer()
 console = Console()
@@ -104,7 +105,7 @@ def client(
             if port:
                 args = [
                     "python",
-                    f"src/gaf_guard/clients/{type}.py",
+                    f"{str(PACKAGEDIR)}/clients/{type}.py",
                     "--host",
                     host,
                     "--port",
@@ -113,7 +114,7 @@ def client(
             else:
                 args = [
                     "python",
-                    f"src/gaf_guard/clients/{type}.py",
+                    f"{str(PACKAGEDIR)}/clients/{type}.py",
                     "--host",
                     host,
                 ]

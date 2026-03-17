@@ -79,7 +79,7 @@ if "server_status" not in st.session_state:
 if "host" not in st.session_state:
     st.session_state.host = "http://localhost"
 if "port" not in st.session_state:
-    st.session_state.port = 0
+    st.session_state.port = 8000
 st.session_state.priority = ["low", "medium", "high"]
 st.session_state.initial_risks_master = ["Toxic output", "Hallucination"]
 st.set_page_config(
@@ -120,7 +120,7 @@ def file_uploaded():
         name="GAF Guard Client",
         type=MessageType.GAF_GUARD_QUERY,
         role=Role.SYSTEM,
-        content=f"**File uploaded successfully:** {st.session_state.prompt_file_uploader.name}",
+        content=f"**File uploaded successfully:** {st.session_state.prompt_file_uploader.name}. Please click on **Start** to begin risk assessment.",
         accept=UserInputType.INPUT_PROMPT,
         run_configs=run_configs,
     )
@@ -453,8 +453,8 @@ def connect_screen_dialog():
             disabled=st.session_state.server_status == ServerStatus.CONNECTING,
         )
         st.session_state.port = st.number_input(
-            "**GAF Guard Port** (Optional)",
-            value=None,
+            "**GAF Guard Port**",
+            value=st.session_state.port,
             step=1,
             disabled=st.session_state.server_status == ServerStatus.CONNECTING,
         )
@@ -465,8 +465,8 @@ def connect_screen_dialog():
     if st.session_state.server_status == ServerStatus.FAILED:
         st.error(st.session_state.error, icon="🚨")
     elif submitted:
-        st.session_state.base_url = st.session_state.host + (
-            f":{int(st.session_state.port)}" if st.session_state.port else ""
+        st.session_state.base_url = (
+            st.session_state.host + f":{int(st.session_state.port)}"
         )
         with st.status(
             f"Connecting to GAF Guard using host: :blue[**{st.session_state.base_url}**]",
@@ -540,9 +540,16 @@ async def app():
     # add sidebar and related components
     add_sidebar()
 
-    # Display chat messages from history
-    for message in st.session_state.messages:
-        render(message)
+    if len(st.session_state.messages) > 1:
+        # Display chat messages from history
+        for message in st.session_state.messages:
+            render(message)
+    else:
+        message_container = st.container(height="stretch")
+        with message_container:
+            st.info(
+                "Begin a new workflow. Please enter your intent in the text box below."
+            )
 
     last_message: WorkflowMessage = st.session_state.messages[-1]
 
