@@ -136,11 +136,14 @@ class DataInfo(BaseModel):
     )
     size: str = Field(
         ...,
-        description="Dataset size with specific numbers (e.g., '10,000 examples', '50K questions across 3 splits')",
+        description="Dataset size. Prefer number of examples from paper (e.g., '817 questions'). "
+        "If only disk size from HuggingFace is available, use that (e.g., '1.24 GB')",
     )
     format: str = Field(
         ...,
-        description="Data structure, file formats, and organization (e.g., 'JSON with question-answer pairs', 'CSV with multiple choice options')",
+        description="The data format as described in the paper or README "
+        "(e.g., 'JSON with question-answer pairs'). If only the HuggingFace hosting "
+        "format is known, note it as such (e.g., 'parquet (HuggingFace hosting format)')",
     )
     annotation: str = Field(
         ...,
@@ -360,8 +363,44 @@ def compose_benchmark_card(
         "ethical_and_legal_considerations": "ethics privacy licensing consent compliance regulations",
     }
 
+    has_paper = bool(docling_output and docling_output.get("success"))
+    has_hf = bool(hf_metadata)
+    has_unitxt = bool(unitxt_metadata)
+
+    # Build source priority text dynamically based on available sources
+    if has_paper:
+        source_priority_text = """SOURCE PRIORITY (varies by field type):
+
+CONCEPTUAL FIELDS (Paper is primary source):
+- overview, goal, audience, tasks, limitations, out_of_scope_uses,
+  methods, calculation, interpretation, baseline_results, validation,
+  similar_benchmarks, annotation
+→ Priority: Paper > HuggingFace > UnitXT
+
+OPERATIONAL/METADATA FIELDS (HuggingFace is primary source):
+- size, format, languages, data_licensing, resources
+→ Priority: HuggingFace > Paper > UnitXT
+
+STRUCTURAL FIELDS (UnitXT is primary source):
+- metrics, domains, data_type
+→ Priority: UnitXT tags > Paper > HuggingFace
+
+WHEN SOURCES CONFLICT:
+- Use the value from the PRIMARY source for that field type
+- Note the conflict in provenance (see CONFLICT HANDLING below)
+- Do NOT average or merge conflicting values"""
+    else:
+        source_priority_text = """SOURCE PRIORITY (no academic paper available):
+1. HuggingFace README and metadata (PRIMARY - treat as authoritative description)
+2. UnitXT metadata (catalog and task metadata)
+3. Extracted IDs (for URLs and identifiers)
+
+NOTE: No academic paper was found for this benchmark.
+Rely on HuggingFace README as the main descriptive source.
+For structural/task fields, prefer UnitXT metadata."""
+
     generated_sections = {}
-    all_provenance = {}  # Track provenance for all sections
+    all_provenance = {}
 
     for section_name, section_class in sections:
         logger.debug("Generating %s", section_name.replace("_", " ").title())
@@ -393,143 +432,27 @@ def compose_benchmark_card(
             # No retriever available, use first 2000 chars as fallback
             paper_content = docling_output.get("filtered_text", "Not available")[:2000]
 
-        # Define few-shot examples for each section
-        # NOTE: Placeholders like [BENCHMARK_1] are used to prevent the LLM from copying example values
-        few_shot_examples = {
-            "benchmark_details": {
-                "good_example": {
-                    "name": "[BENCHMARK_NAME] - use actual name from sources",
-                    "overview": "A comprehensive description extracted from the paper abstract or introduction, explaining what the benchmark evaluates and its key characteristics.",
-                    "data_type": "text",
-                    "domains": [
-                        "[DOMAIN_1] - extract from paper",
-                        "[DOMAIN_2] - extract from paper",
-                    ],
-                    "languages": ["[LANGUAGE] - extract from sources"],
-                    "similar_benchmarks": ["[BENCHMARK_1] - ONLY if explicitly mentioned in paper", "[BENCHMARK_2] - otherwise use 'Not specified'"],
-                    "resources": [
-                        "[URL_1] - use actual URLs from sources",
-                        "[URL_2] - use actual URLs from sources",
-                    ],
-                },
-                "bad_example": {
-                    "name": "prompt_leakage.glue",
-                    "overview": "natural language understanding",
-                    "data_type": "text",
-                    "domains": ["NLP"],
-                    "languages": ["en"],
-                    "similar_benchmarks": ["D1", "D2"],
-                    "resources": ["paper", "dataset"],
-                },
-            },
-            "purpose_and_intended_users": {
-                "good_example": {
-                    "goal": "Extract the stated purpose/goal from the paper's introduction or abstract. Describe what the benchmark aims to evaluate or achieve.",
-                    "audience": [
-                        "[AUDIENCE_1] - extract from paper if mentioned",
-                        "[AUDIENCE_2] - otherwise use generic ML/NLP audience",
-                    ],
-                    "tasks": [
-                        "[TASK_1] - list actual tasks from sources",
-                        "[TASK_2] - list actual tasks from sources",
-                    ],
-                    "limitations": "Extract limitations explicitly stated in the paper. If none stated, write 'Not specified'",
-                    "out_of_scope_uses": [
-                        "[USE_1] - extract from paper if mentioned",
-                        "Otherwise write 'Not specified'",
-                    ],
-                }
-            },
-            "data": {
-                "good_example": {
-                    "source": "Describe data sources as stated in the paper or HuggingFace metadata",
-                    "size": "[NUMBER] examples - USE EXACT COUNT FROM SOURCES (e.g., '1.24 GB' from HuggingFace, or 'Not specified' if not found)",
-                    "format": "[FORMAT] - extract from HuggingFace (e.g., 'parquet') or paper, otherwise 'Not specified'",
-                    "annotation": "Describe annotation process from paper. If not described, write 'Not specified'",
-                },
-                "bad_example": {
-                    "source": "various sources",
-                    "size": "large dataset",
-                    "format": "text",
-                    "annotation": "manual annotation",
-                },
-            },
-            "methodology": {
-                "good_example": {
-                    "methods": [
-                        "[METHOD_1] - extract evaluation methods from paper",
-                        "[METHOD_2] - extract evaluation methods from paper",
-                    ],
-                    "metrics": [
-                        "[METRIC_1] - list metrics explicitly mentioned in sources",
-                        "[METRIC_2] - list metrics explicitly mentioned in sources",
-                    ],
-                    "calculation": "Describe how metrics are calculated IF explicitly stated in paper. Otherwise write 'Not specified'",
-                    "interpretation": "Describe score interpretation IF stated in paper. Write 'Not specified' if human baseline not mentioned.",
-                    "baseline_results": "[MODEL] achieves [SCORE]% - ONLY include if EXACT numbers appear in paper. Otherwise write 'Not specified'",
-                    "validation": "Describe validation approach from paper. If not described, write 'Not specified'",
-                }
-            },
-        }
-
-        section_example = few_shot_examples.get(section_name, {})
-        example_text = ""
-        if section_example:
-            if "good_example" in section_example:
-                good_json = (
-                    json.dumps(section_example["good_example"], indent=2)
-                    .replace("{", "{{")
-                    .replace("}", "}}")
-                )
-                example_text += f"\n\nGOOD EXAMPLE:\n{good_json}"
-            if "bad_example" in section_example:
-                bad_json = (
-                    json.dumps(section_example["bad_example"], indent=2)
-                    .replace("{", "{{")
-                    .replace("}", "}}")
-                )
-                example_text += f"\n\nBAD EXAMPLE (avoid this):\n{bad_json}"
-
-        # set up section-specific prompt with enhanced instructions and priority order
+        # set up section-specific prompt
         section_prompt = ChatPromptTemplate.from_messages(
             [
                 (
                     "system",
-                    f"""You are an AI evaluation researcher. Generate a {section_class.__name__} object for the '{section_name}' section.
+                    f"""You are documenting an AI benchmark. Generate the '{section_name}' section.
 
-CRITICAL RULES:
-1. Use ONLY information from the provided metadata sources
-2. If information is missing, write exactly: "Not specified"
-3. Do NOT use your training data or make assumptions
-4. Be concise and specific
-5. Return only valid JSON
+RULES:
+1. Use ONLY the provided metadata sources. If information is not found, write exactly "Not specified".
+2. Write in third person. Describe the benchmark objectively ("The benchmark evaluates..." not "We evaluate..."). When a source uses "we/our", rephrase into third-person descriptive language.
+3. Do not invent facts, URLs, numbers, or performance scores. Only include what the sources explicitly state.
 
-SOURCE PRIORITY (use in this order):
-1. Paper Content (HIGHEST PRIORITY - most authoritative source)
-2. HuggingFace metadata (official dataset information)
-3. UnitXT metadata (catalog metadata)
-4. Extracted IDs (for URLs and identifiers)
+{source_priority_text}
 
-FORBIDDEN:
-- Generic examples (e.g., "BERT-large achieves 80.5%") unless explicitly in sources
-- Placeholder names (e.g., "D1", "D2") unless in metadata
-- Invented metrics or performance numbers
-- Fake URLs or resources
-- Rambling or repetitive text
-- Copying values from the examples below - they are templates only
-
-FIELD-SPECIFIC RULES (use "Not specified" if not found in sources):
-- methodology.baseline_results: ONLY include specific model scores if EXACT numbers appear in paper/sources. Otherwise write "Not specified"
-- methodology.interpretation: ONLY include human baseline percentage if paper explicitly states it. Otherwise write "Not specified"
-- methodology.calculation: ONLY describe if paper explains how metrics are computed. Otherwise write "Not specified"
-- methodology.validation: ONLY describe if paper explains validation approach. Otherwise write "Not specified"
-- benchmark_details.similar_benchmarks: ONLY list benchmarks explicitly mentioned/compared in the paper. Otherwise write "Not specified"
-- data.size: Use EXACT numbers from sources (e.g., "1.24 GB" from HuggingFace, "10K examples" from paper). Do NOT approximate or invent numbers.
-- data.format: Use format from HuggingFace tags (e.g., "parquet") or paper. Otherwise write "Not specified"
+AMBIGUOUS FIELDS:
+- data.size: Prefer example counts from the paper (e.g., "817 questions"). If unavailable, use HuggingFace disk size (e.g., "1.24 GB"). Do not conflate the two.
+- data.format: Prefer the format described in the paper or README. If only the HuggingFace hosting format is known, note it (e.g., "parquet (HuggingFace hosting format)").
+- benchmark_details.languages: Use full names (e.g., "English" not "en").
 
 PROVENANCE TRACKING (REQUIRED):
-For EVERY field you fill in (except "Not specified" values), you MUST add an entry to the "provenance" field.
-The provenance field maps each field name to its source and evidence:
+For every field you fill in (except "Not specified"), include a provenance entry mapping the field name to its source and a supporting quote:
 {{{{
   "provenance": {{{{
     "field_name": {{{{
@@ -538,19 +461,24 @@ The provenance field maps each field name to its source and evidence:
     }}}}
   }}}}
 }}}}
-Example: If you set size to "1.24 GB" from HuggingFace, include:
-  "provenance": {{{{"size": {{{{"source": "huggingface", "evidence": "Total amount of disk used: 1.24 GB"}}}}}}}}
-- Include the EXACT text snippet that supports your value
-- Omit fields set to "Not specified" from provenance
-
-{example_text}""",
+If sources conflict, use the primary source for that field type and add a "conflict" key:
+{{{{
+  "provenance": {{{{
+    "field_name": {{{{
+      "source": "huggingface",
+      "evidence": "Total amount of disk used: 1.24 GB",
+      "conflict": "Paper states 10K examples but no disk size"
+    }}}}
+  }}}}
+}}}}""",
                 ),
                 (
                     "user",
-                    f"""Query: {{query}}
+                    f"""Benchmark: {{query}}
 
-METADATA SOURCES (in priority order):
-1. PAPER CONTENT (highest priority - use this first):
+METADATA SOURCES:
+
+1. PAPER CONTENT:
 {{paper_content}}
 
 2. HuggingFace Dataset:
@@ -562,13 +490,7 @@ METADATA SOURCES (in priority order):
 4. Extracted IDs:
 {{extracted_ids}}
 
-INSTRUCTIONS:
-- Extract information from sources in priority order (1 → 4)
-- Paper content is the most authoritative source - use it first
-- Only use HuggingFace/UnitXT if information is NOT found in paper
-- If a field cannot be found in ANY source, use "Not specified"
-
-Generate {section_name} section using ONLY the metadata above.""",
+Generate the {section_name} section using ONLY the sources above.""",
                 ),
             ]
         )

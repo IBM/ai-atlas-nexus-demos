@@ -111,6 +111,11 @@ class LLMHandler:
             **kwargs
         )
 
+    @staticmethod
+    def _strip_think_tokens(text: str) -> str:
+        """Remove DeepSeek-style <think>…</think> reasoning traces from output."""
+        return re.sub(r"<think>.*?</think>\s*", "", text, flags=re.DOTALL).strip()
+
     def generate(self, prompt: str, response_format: Optional[Dict] = None) -> str:
         """Generate text response from a single prompt.
 
@@ -122,7 +127,7 @@ class LLMHandler:
             Generated text string
         """
         result = self.engine.generate([prompt], response_format=response_format, verbose=self.verbose)
-        return result[0].prediction
+        return self._strip_think_tokens(result[0].prediction)
 
     def chat(
         self,
@@ -139,7 +144,7 @@ class LLMHandler:
             Generated response string
         """
         result = self.engine.chat(messages, response_format=response_format, verbose=self.verbose)
-        return result[0].prediction
+        return self._strip_think_tokens(result[0].prediction)
 
     def generate_structured(self, prompt: str, response_schema: BaseModel) -> Any:
         """Generate structured output using Pydantic model.
@@ -160,21 +165,18 @@ class LLMHandler:
         """
         schema = response_schema.model_json_schema()
         result = self.engine.generate([prompt], response_format=schema, verbose=self.verbose)
+        raw = self._strip_think_tokens(result[0].prediction)
 
         try:
-            # Parse the JSON response
-            parsed = json.loads(result[0].prediction)
-            # Validate with Pydantic
+            parsed = json.loads(raw)
             return response_schema.model_validate(parsed)
         except (json.JSONDecodeError, ValueError) as e:
-            # Fallback: try to extract JSON from text
             try:
-                # Look for JSON in the response
-                json_match = re.search(r"\{.*\}", result[0].prediction, re.DOTALL)
+                json_match = re.search(r"\{.*\}", raw, re.DOTALL)
                 if json_match:
                     parsed = json.loads(json_match.group())
                     return response_schema.model_validate(parsed)
-            except:
+            except Exception:
                 pass
             raise ValueError(f"Failed to parse structured output: {e}")
 

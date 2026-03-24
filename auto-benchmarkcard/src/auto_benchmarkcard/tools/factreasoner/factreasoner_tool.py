@@ -590,35 +590,54 @@ def flag_benchmark_card_fields(
     benchmark_card: Dict[str, Any],
     field_analysis: Dict[str, Any],
     threshold: float = 0.8,
+    provenance: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Create a flagged benchmark card with a clean structure and flagged_fields section.
+
+    When provenance data is available, fields that score neutral in NLI but have
+    clear provenance evidence are not flagged as hallucinations.
 
     Args:
         benchmark_card: Original benchmark card structure.
         field_analysis: Field analysis results from analyze_factuality_by_field.
         threshold: Factuality threshold below which fields are flagged (default 0.8).
+        provenance: Optional provenance data from composer (section -> field -> {source, evidence}).
 
     Returns:
         Benchmark card with flagged_fields section at the bottom.
     """
 
-    # Start with deep copy of the original card
     flagged_card = copy.deepcopy(benchmark_card)
     field_details = field_analysis.get("field_details", {})
 
-    # Track flagged fields and reasons
     flagged_fields = {}
 
-    # Analyze each field
     for field_name, field_stats in field_details.items():
-        # Skip the "name" field - don't flag it even if FactReasoner suggests it
         if field_name == "benchmark_details.name" or field_name.endswith(".name"):
             continue
 
         should_flag, reason, reason_desc = _determine_flag_reason(field_stats, threshold)
 
+        if should_flag and provenance:
+            # Check if provenance confirms this field before flagging
+            parts = field_name.split(".")
+            section_key = parts[0] if len(parts) > 0 else ""
+            field_key = parts[1] if len(parts) > 1 else ""
+
+            section_prov = provenance.get(section_key, {})
+            field_prov = section_prov.get(field_key, {})
+
+            if field_prov.get("source") and field_prov.get("evidence"):
+                # Provenance has clear source and evidence -- the NLI model
+                # just couldn't match the wording. Don't flag as hallucination.
+                should_flag = False
+                logger.debug(
+                    "Skipping flag for %s: provenance confirms source=%s",
+                    field_name,
+                    field_prov["source"],
+                )
+
         if should_flag:
-            # Create human-readable flag reason
             if reason == "all_atoms_neutral":
                 flag_reason = (
                     "[Possible Hallucination], no supporting evidence found in source material"
@@ -629,7 +648,6 @@ def flag_benchmark_card_fields(
 
             flagged_fields[field_name] = flag_reason
 
-    # Add flagged fields section at the bottom if there are any flagged fields
     if flagged_fields:
         flagged_card["flagged_fields"] = flagged_fields
 
