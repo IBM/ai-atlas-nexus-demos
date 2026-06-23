@@ -1,3 +1,9 @@
+> [!IMPORTANT]
+> **This demo is archived.** This folder is the snapshot of Auto-BenchmarkCard as submitted
+> for publication, kept here for reference and no longer maintained. Active development now
+> lives at **https://github.com/evaleval/auto-benchmarkcard**.
+> See [MOVED.md](./MOVED.md) for all current links.
+
 # Auto-BenchmarkCard: Automated Synthesis of Benchmark Documentation
 
 We present Auto-BenchmarkCard, a workflow for generating validated descriptions of AI benchmarks. Benchmark documentation is often incomplete or inconsistent, making it difficult to interpret and compare benchmarks across tasks or domains. Auto-BenchmarkCard addresses this gap by combining multi-agent data extraction from heterogeneous sources (e.g., Hugging Face, Unitxt, academic papers) with LLM-driven synthesis. A subsequent validation phase evaluates factual accuracy through atomic entailment scoring using the FactReasoner tool. The workflow promotes transparency, comparability, and reusability in AI benchmark reporting, enabling researchers and practitioners to better navigate and evaluate benchmark choices.
