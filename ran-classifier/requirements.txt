@@ -1,0 +1,5 @@
+scikit-learn>=1.0.0
+numpy>=1.20.0
+pandas>=1.3.0
+jupyter>=1.0.0
+ai-atlas-nexus>=0.1.0
