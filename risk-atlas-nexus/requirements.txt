@@ -1,0 +1,6 @@
+gradio==5.49.1
+linkml==1.8.6
+linkml_runtime==1.8.3
+ibm_watsonx_ai==1.2.8
+numpy<2
+ai-atlas-nexus [wml] @ git+https://github.com/IBM/ai-atlas-nexus

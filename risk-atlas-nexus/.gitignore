@@ -1,0 +1,5 @@
+.DS_Store
+.env
+scratch.py
+__pycache__
+static/download.json
