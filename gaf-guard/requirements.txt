@@ -197,7 +197,7 @@ pydeck==0.9.1
 pyfiglet==1.0.4
 Pygments==2.19.2
 PyJSG==0.11.10
-PyJWT==2.10.1
+PyJWT==2.14.0
 pymdown-extensions==10.21
 pyOpenSSL==25.3.0
 pyparsing==3.3.2
