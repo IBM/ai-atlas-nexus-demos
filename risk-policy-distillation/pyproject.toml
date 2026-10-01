@@ -33,7 +33,7 @@ dependencies = [
     "nltk", 
     "torch", 
     "pytorch_lightning", 
-    "litellm==1.83.0", 
+    "litellm==1.88.6", 
     "sentence_transformers", 
     "langchain",
     "openai",
